@@ -1,7 +1,8 @@
 #CS122: Group Project - Chess Heatmaps
 #
 #Names: Will Simkins, Natalie Gray, Steven Cooklev
-#
+#github username: wsimkins
+#github password: NSFWpassword1
 
 import bs4
 import re
@@ -81,6 +82,8 @@ def create_database(html_file, output_file):
 	print(r.fetchall())
 
 	conn.close()
+
+
 
 
 
