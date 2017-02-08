@@ -9,9 +9,28 @@ import re
 import sqlite3 as sql
 
 
+def clean_data(html_input_file, html_output_file):
+	'''
+	Cleans a given html_file and outputs a new html_file
+	'''
+
+	html = open(html_input_file, "r") 
+	text = html.read()
+	soup = bs4.BeautifulSoup(text, "lxml")
+	movelists = soup.find_all("p")
+	for all_moves_of_game in movelists:
+		moves = all_moves_of_game.find_all("b")
+		''.join(str(x) for x in moves)
+		re.sub("<b>", '', moves)
+		re.sub("</b>", '', moves)
+
+	html_output_file.write(text)
 
 
 def create_database(html_file, output_file):
+	'''
+	Converts a given html file into a SQL table
+	'''
 	conn = sql.connect(output_file, timeout=10)
 	c = conn.cursor()
 	
@@ -65,7 +84,6 @@ def create_database(html_file, output_file):
 			black_moves += split_move[1] + " "
 
 		if(black_moves[-4:] == "1-0 " or black_moves[-4:] == "0-1 "):
-			print("pancakes")
 			black_moves = black_moves[:-4]
 		elif(black_moves[-4:] == "1/2 "):
 			black_moves = black_moves[:-8]
