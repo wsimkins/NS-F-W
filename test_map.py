@@ -31,8 +31,9 @@ def will_example():
        for moves in white_moves:
            white_moves_string += str(moves)[2:-3] + " "
        white_moves_list = white_moves_string.split()
+       num_games = 19
 
-       df = gda.generate_moved_to_data_all_pieces(white_moves_list, "white")
+       df = gda.generate_moved_to_data_all_pieces(white_moves_list, "white", num_games)
 
        xlabels = ["a", "b", "c", "d", "e", "f", "g", "h"]
        ylabels = ["8", "7", "6", "5", "4", "3", "2", "1"]
@@ -43,11 +44,11 @@ def will_example():
 
        sns.plt.show()
 
-       df2 = gda.generate_moved_to_data(white_moves_list, "white", "queen")
+       df2 = gda.generate_moved_to_data(white_moves_list, "white", "bishop", num_games)
 
        ax2 = plt.axes()
-       sns.heatmap(df2, annot=False, fmt="d", cmap = "Reds", xticklabels = xlabels, yticklabels = ylabels)
-       ax2.set_title("2007 Czech Open - White Queen")
+       sns.heatmap(df2, annot=True, fmt="d", cmap = "Reds", xticklabels = xlabels, yticklabels = ylabels)
+       ax2.set_title("2007 Czech Open - White Bishops")
        sns.plt.show()
 
 

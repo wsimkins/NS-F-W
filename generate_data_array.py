@@ -17,11 +17,11 @@ STARTING_SQUARES = {"white":{"rook":[(1, 1), (8, 1)], "knight":[(2, 1), (7, 1)],
 LETTER_TO_NUM = {"a":"1", "b":"2", "c":"3", "d":"4", "e":"5", "f":"6", "g":"7", "h":"8"}
 PIECE_TO_LETTER = {"rook":"R", "knight":"N", "bishop":"B", "queen":"Q", "king":"K", "pawn":"P"}
 
-def generate_moved_to_data(move_list, color, piece):
+def generate_moved_to_data(move_list, color, piece, num_games):
 	heatmap_data = np.zeros((8,8))
 	starting_squares = STARTING_SQUARES[color][piece]
 	for starting_square in starting_squares:
-		heatmap_data[tuple(np.subtract(starting_square, (1,1)))] += 1
+		heatmap_data[tuple(np.subtract(starting_square, (1,1)))] += num_games
 
 	for move in move_list:
 		destination_tuple = None
@@ -59,14 +59,14 @@ def generate_moved_to_data(move_list, color, piece):
 		if destination_tuple:
 			heatmap_data[tuple(np.subtract(destination_tuple, (1, 1)))] += 1
 
-	return np.rot90(heatmap_data)
+	return np.rot90(heatmap_data).astype("int")
 
 
-def generate_moved_to_data_all_pieces(move_list, color):
+def generate_moved_to_data_all_pieces(move_list, color, num_games):
 	heatmap_data = np.zeros((8, 8))
 	for piece in STARTING_SQUARES[color].keys():
 		for starting_square in STARTING_SQUARES[color][piece]:
-			heatmap_data[tuple(np.subtract(starting_square, (1,1)))] += 1
+			heatmap_data[tuple(np.subtract(starting_square, (1,1)))] += num_games
 
 	for move in move_list:
 		destination_tuples = []
@@ -94,7 +94,7 @@ def generate_moved_to_data_all_pieces(move_list, color):
 		for destination_tuple in destination_tuples:
 			heatmap_data[tuple(np.subtract(destination_tuple, (1, 1)))] += 1
 
-	return np.rot90(heatmap_data)
+	return np.rot90(heatmap_data).astype("int")
 
 
 
