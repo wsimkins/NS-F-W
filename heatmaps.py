@@ -36,7 +36,8 @@ def create_database(html_file, output_file):
 	c = conn.cursor()
 	
 	# initializes both SQL tables
-	c.execute('''CREATE TABLE IF NOT EXISTS games (gameid text PRIMARY KEY, white_player text, 
+	# NOTE REMOVED PRIMARY KEY FROM GAME ID BECAUSE I GOT UNIQUE CONSTRAINT FAILED -WILL
+	c.execute('''CREATE TABLE IF NOT EXISTS games (gameid text, white_player text, 
 		black_player text, white_rating integer, black_rating integer, result text, 
 		ECO text, year integer)''')
 	c.execute('''CREATE TABLE IF NOT EXISTS moves (gameid text, white_moves blob, 
@@ -117,8 +118,8 @@ def create_database(html_file, output_file):
 
 	conn.commit()
 
-	r = c.execute("SELECT * FROM games JOIN moves ON games.gameid = moves.gameid LIMIT 2")
-	print(r.fetchall())
+	r = c.execute("SELECT white_moves FROM moves")
+	return r.fetchall()
 
 	conn.close()
 

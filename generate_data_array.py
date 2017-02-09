@@ -32,7 +32,7 @@ def generate_moved_to_data(move_list, color, piece):
 			destination = re.search("[a-h][1-8]", move).group()
 			destination_tuple = (int(LETTER_TO_NUM[destination[0]]), int(destination[1]))
 
-		elif move == "0-0":
+		elif move == "0-0,":
 			if piece == "rook":
 				if color == "white":
 					destination_tuple = (6, 1)
@@ -44,7 +44,7 @@ def generate_moved_to_data(move_list, color, piece):
 				else:
 					destination_tuple = (7, 8)
 
-		elif move == "0-0-0":
+		elif move == "0-0-0,":
 			if piece == "rook":
 				if color == "white":
 					destination_tuple = (4, 1)
@@ -60,6 +60,47 @@ def generate_moved_to_data(move_list, color, piece):
 			heatmap_data[tuple(np.subtract(destination_tuple, (1, 1)))] += 1
 
 	return np.rot90(heatmap_data)
+
+
+def generate_moved_to_data_all_pieces(move_list, color):
+	heatmap_data = np.zeros((8, 8))
+	for piece in STARTING_SQUARES[color].keys():
+		for starting_square in STARTING_SQUARES[color][piece]:
+			heatmap_data[tuple(np.subtract(starting_square, (1,1)))] += 1
+
+	for move in move_list:
+		destination_tuples = []
+		
+		if move == "0-0,":
+			if color == "white":
+				destination_tuples.append((6, 1))
+				destination_tuples.append((7, 1))
+			else:
+				destination_tuples.append((6, 8))
+				destination_tuples.append((7, 8))
+		
+		elif move == "0-0-0,":
+			if color == "white":
+				destination_tuples.append((3, 1))
+				destination_tuples.append((4, 1))
+			else:
+				destination_tuples.append((3, 8))
+				destination_tuples.append((4, 8))
+
+		else:
+			destination = re.search("[a-h][1-8]", move).group()
+			destination_tuples.append((int(LETTER_TO_NUM[destination[0]]), int(destination[1])))
+
+		for destination_tuple in destination_tuples:
+			heatmap_data[tuple(np.subtract(destination_tuple, (1, 1)))] += 1
+
+	return np.rot90(heatmap_data)
+
+
+
+
+
+
 
 
 	
