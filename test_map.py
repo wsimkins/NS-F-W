@@ -43,11 +43,11 @@ def will_example():
 
        sns.plt.show()
 
-       df2 = gda.generate_moved_to_data(white_moves_list, "white", "bishop")
+       df2 = gda.generate_moved_to_data(white_moves_list, "white", "queen")
 
        ax2 = plt.axes()
        sns.heatmap(df2, annot=False, fmt="d", cmap = "Reds", xticklabels = xlabels, yticklabels = ylabels)
-       ax2.set_title("2007 Czech Open - White Bishops")
+       ax2.set_title("2007 Czech Open - White Queen")
        sns.plt.show()
 
 
