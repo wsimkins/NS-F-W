@@ -26,14 +26,10 @@ def example_map():
 	sns.plt.show()
 
 def will_example():
-       white_moves = heatmaps.create_database("working_html.htm", "output_file.db")
-       white_moves_string = " "
-       for moves in white_moves:
-           white_moves_string += str(moves)[2:-3] + " "
-       white_moves_list = white_moves_string.split()
-       num_games = 19
+       white_moves_list, bishop_moves_list = heatmaps.create_database("working_html.htm", "output_file.db")
 
-       df = gda.generate_moved_to_data_all_pieces(white_moves_list, "white", num_games)
+       df = gda.generate_moved_to_data(white_moves_list, "white", "all", 19)
+       print(df)
 
        xlabels = ["a", "b", "c", "d", "e", "f", "g", "h"]
        ylabels = ["8", "7", "6", "5", "4", "3", "2", "1"]
@@ -44,7 +40,7 @@ def will_example():
 
        sns.plt.show()
 
-       df2 = gda.generate_moved_to_data(white_moves_list, "white", "bishop", num_games)
+       df2 = gda.generate_moved_to_data(bishop_moves_list, "white", "bishop", 19)
 
        ax2 = plt.axes()
        sns.heatmap(df2, annot=True, fmt="d", cmap = "Reds", xticklabels = xlabels, yticklabels = ylabels)

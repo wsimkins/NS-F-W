@@ -39,9 +39,8 @@ def create_database(html_file, output_file):
 	# NOTE REMOVED PRIMARY KEY FROM GAME ID BECAUSE I GOT UNIQUE CONSTRAINT FAILED -WILL
 	c.execute('''CREATE TABLE IF NOT EXISTS games (gameid text, white_player text, 
 		black_player text, white_rating integer, black_rating integer, result text, 
-		ECO text, year integer)''')
-	c.execute('''CREATE TABLE IF NOT EXISTS moves (gameid text, white_moves blob, 
-				black_moves blob, num_moves integer)''')
+		ECO text, year integer, num_move integer)''')
+	c.execute('''CREATE TABLE IF NOT EXISTS moves (gameid text, move text, color text, move_num integer)''')
 
 	html = open(html_file, "r")
 	text = html.read()
@@ -82,46 +81,42 @@ def create_database(html_file, output_file):
 		# extracts the year from the header
 		year = int(header[-5:-1])
 
-		# inserts all data into games table for the current header and movelist
-		c.execute("INSERT INTO games VALUES " + \
-			str((gameid, white_player, black_player, white_rating, 
-				black_rating, result, ECO, year)))
-
 		# extracts a list of white move, black move pairs from the movelist
 		moves = re.findall("\.[^.]+", movelist)
 		moves = [move[1:] for move in moves]
-		
-		# separates the list of moves into strings of white moves and black 
-		# moves
-		white_moves = ""
-		black_moves = ""
-		for move in moves:
-			split_move = move.split()
-			white_moves += split_move[0] + ", "
-			black_moves += split_move[1] + ", "
-
-		# removes the result from the list of black moves if the game ended
-		# in a white move
-		if(black_moves[-4:] == "1-0 " or black_moves[-4:] == "0-1 "):
-			black_moves = black_moves[:-4]
-		elif(black_moves[-4:] == "1/2 "):
-			black_moves = black_moves[:-8]
 
 		# calculates the number of moves in the game
 		num_moves = len(moves)
 
-		# inserts the extracted data into the moves table for the current
-		# movelist
-		c.execute("INSERT INTO moves VALUES " + \
-			str((gameid, white_moves[:-1], black_moves[:-1], num_moves))) 
+		# inserts all data into games table for the current header and movelist
+		c.execute("INSERT INTO games VALUES " + \
+			str((gameid, white_player, black_player, white_rating, 
+				black_rating, result, ECO, year, num_moves)))
+		
+		# separates the list of moves into strings representing individual moves
+		# and then inserts these moves into the moves table
+		for i in range(len(moves)):
+			split_move = moves[i].split()
+			white_move = split_move[0].strip()
+			black_move = split_move[1].strip()
+			c.execute("INSERT INTO moves VALUES " + \
+				str((gameid, white_move, "white", i+1))) 
+
+			# removes the result from the list of black moves if the game ended
+			# in a white move
+			if not black_move[-4:] == "1-0 " or black_move[-4:] == "0-1 " or black_move[-4:] == "1/2 ":
+				c.execute("INSERT INTO moves VALUES " + \
+					str((gameid, black_move, "black", i+1))) 
 
 
 	conn.commit()
 
-	r = c.execute("SELECT white_moves FROM moves")
-	return r.fetchall()
+	r = c.execute("SELECT move FROM moves WHERE color = ? ORDER BY move_num", ("white",))
+	white_moves = r.fetchall()
+	q = c.execute("SELECT move FROM moves WHERE color = ? AND substr(move, 1, 1) = ? ORDER BY move_num", ("white", "B"))
+	bishop_moves = q.fetchall()
+	return white_moves, bishop_moves
 
-	conn.close()
 
 
 
