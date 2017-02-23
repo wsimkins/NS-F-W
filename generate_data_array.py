@@ -112,13 +112,12 @@ def generate_time_spent_data(white_move_list, black_move_list):
 	for piece in white_data.keys():
 		white_ss = STARTING_SQUAREZ["white"][piece]
 		black_ss = STARTING_SQUAREZ["black"][piece]
-		if len(white_ss) != len(black_ss):
-			print("i hate u will", piece)
 		for i in range(len(white_ss)):
 			white_data[piece][8 - white_ss[i][1]][white_ss[i][0] - 1] = 1
 			black_data[piece][8 - black_ss[i][1]][black_ss[i][0] - 1] = 1
 
 	for move_num in range(len(white_move_list)):
+		en_passant = False
 		white_move = white_move_list[move_num][0]
 		black_move = None
 		if move_num < len(black_move_list):
@@ -129,16 +128,16 @@ def generate_time_spent_data(white_move_list, black_move_list):
 			destination_tuple = (LETTER_TO_NUM[destination[0]], int(destination[1]))
 			prev_loc = cur_locs["white"]["king"][0]
 			cur_locs["white"]["king"][0] = destination_tuple
-			cur_board[8 - prev_loc[1]][prev_loc[0] - 1] = "e "
-			cur_board[8 - destination_tuple[1]][destination_tuple[0] - 1] = "WK"
+			cur_board[convert_tup(prev_loc)] = "e "
+			cur_board[convert_tup(destination_tuple)] = "WK"
 
 		elif white_move[0] == "Q":
 			destination = re.search("[a-h][1-8]", white_move).group()
 			destination_tuple = (LETTER_TO_NUM[destination[0]], int(destination[1]))
 			prev_loc = cur_locs["white"]["queen"][0]
 			cur_locs["white"]["queen"][0] = destination_tuple
-			cur_board[8 - prev_loc[1]][prev_loc[0] - 1] = "e " 
-			cur_board[8 - destination_tuple[1]][destination_tuple[0] - 1] = "WQ"
+			cur_board[convert_tup(prev_loc)] = "e " 
+			cur_board[convert_tup(destination_tuple)] = "WQ"
 
 		elif white_move[0] == "B":
 			destination = re.search("[a-h][1-8]", white_move).group()
@@ -160,8 +159,8 @@ def generate_time_spent_data(white_move_list, black_move_list):
 							break
 
 			cur_locs["white"]["bishop"].append(destination_tuple)
-			cur_board[8 - prev_loc[1]][prev_loc[0] - 1] = "e "
-			cur_board[8 - destination_tuple[1]][destination_tuple[0] - 1] = "WB"
+			cur_board[convert_tup(prev_loc)] = "e "
+			cur_board[convert_tup(destination_tuple)] = "WB"
 
 		elif white_move[0] == "N":
 			destination = re.search("[a-h][1-8]", white_move).group()
@@ -200,8 +199,8 @@ def generate_time_spent_data(white_move_list, black_move_list):
 						break
 
 			cur_locs["white"]["knight"].append(destination_tuple)
-			cur_board[8 - prev_loc[1]][prev_loc[0] - 1] = "e "
-			cur_board[8 - destination_tuple[1]][destination_tuple[0] - 1] = "WN"
+			cur_board[convert_tup(prev_loc)] = "e "
+			cur_board[convert_tup(destination_tuple)] = "WN"
 
 		elif white_move[0] == "R":
 			destination = re.search("[a-h][1-8]", white_move).group()
@@ -255,8 +254,8 @@ def generate_time_spent_data(white_move_list, black_move_list):
 							del rook_locs[i]
 							break
 			cur_locs["white"]["rook"].append(destination_tuple)
-			cur_board[8 - prev_loc[1]][prev_loc[0] - 1] = "e "
-			cur_board[8 - destination_tuple[1]][destination_tuple[0] - 1] = "WR"
+			cur_board[convert_tup(prev_loc)] = "e "
+			cur_board[convert_tup(destination_tuple)] = "WR"
 
 		elif white_move[0].islower():
 			destination = re.search("[a-h][1-8]", white_move).group()
@@ -285,10 +284,15 @@ def generate_time_spent_data(white_move_list, black_move_list):
 						prev_loc = loc
 						del pawn_locs[i]
 						break
+				if cur_board[convert_tup(destination_tuple)] == "e ":
+					en_passant = True
+					captured_square = convert_tup((destination_tuple[0], destination_tuple[1] - 1))
+					cur_board[captured_square)] = "e "
+					cur_locs["black"]["pawn"].remove(captured_square)
 
 			cur_locs["white"]["pawn"].append(destination_tuple)
-			cur_board[8 - prev_loc[1]][prev_loc[0] - 1] = "e "
-			cur_board[8 - destination_tuple[1]][destination_tuple[0] - 1] = "WP"
+			cur_board[convert_tup(prev_loc)] = "e "
+			cur_board[convert_tup(destination_tuple)] = "WP"
 
 		if white_move == "0-0":
 			cur_locs["white"]["rook"].remove((8, 1))
@@ -308,7 +312,7 @@ def generate_time_spent_data(white_move_list, black_move_list):
 			cur_board[7][2] = "WK"
 			cur_board[7][3] = "WR"
 
-		if "x" in white_move:
+		if "x" in white_move and not en_passant:
 			for piece in cur_locs["black"].keys():
 				for i in range(len(cur_locs["black"][piece])):
 					loc = cur_locs["black"][piece][i]
@@ -316,22 +320,24 @@ def generate_time_spent_data(white_move_list, black_move_list):
 						del cur_locs["black"][piece][i]
 						break
 
+		en_passant = False
+
 		if black_move:
 			if black_move[0] == "K":
 				destination = re.search("[a-h][1-8]", black_move).group()
 				destination_tuple = (LETTER_TO_NUM[destination[0]], int(destination[1]))
 				prev_loc = cur_locs["black"]["king"][0]
 				cur_locs["black"]["king"][0] = destination_tuple
-				cur_board[8 - prev_loc[1]][prev_loc[0] - 1] = "e "
-				cur_board[8 - destination_tuple[1]][destination_tuple[0] - 1] = "BK"
+				cur_board[convert_tup(prev_loc)] = "e "
+				cur_board[convert_tup(destination_tuple)] = "BK"
 
 			elif black_move[0] == "Q":
 				destination = re.search("[a-h][1-8]", black_move).group()
 				destination_tuple = (LETTER_TO_NUM[destination[0]], int(destination[1]))
 				prev_loc = cur_locs["black"]["queen"][0]
 				cur_locs["black"]["queen"][0] = destination_tuple
-				cur_board[8 - prev_loc[1]][prev_loc[0] - 1] = "e " 
-				cur_board[8 - destination_tuple[1]][destination_tuple[0] - 1] = "BQ"
+				cur_board[convert_tup(prev_loc)] = "e " 
+				cur_board[convert_tup(destination_tuple)] = "BQ"
 
 			elif black_move[0] == "B":
 				destination = re.search("[a-h][1-8]", black_move).group()
@@ -353,8 +359,8 @@ def generate_time_spent_data(white_move_list, black_move_list):
 								break
 
 				cur_locs["black"]["bishop"].append(destination_tuple)
-				cur_board[8 - prev_loc[1]][prev_loc[0] - 1] = "e "
-				cur_board[8 - destination_tuple[1]][destination_tuple[0] - 1] = "BB"
+				cur_board[convert_tup(prev_loc)] = "e "
+				cur_board[convert_tup(destination_tuple)] = "BB"
 
 			elif black_move[0] == "N":
 				destination = re.search("[a-h][1-8]", black_move).group()
@@ -393,8 +399,8 @@ def generate_time_spent_data(white_move_list, black_move_list):
 							break
 
 				cur_locs["black"]["knight"].append(destination_tuple)
-				cur_board[8 - prev_loc[1]][prev_loc[0] - 1] = "e "
-				cur_board[8 - destination_tuple[1]][destination_tuple[0] - 1] = "BN"
+				cur_board[convert_tup(prev_loc)] = "e "
+				cur_board[convert_tup(destination_tuple)] = "BN"
 
 			elif black_move[0] == "R":
 				destination = re.search("[a-h][1-8]", black_move).group()
@@ -448,8 +454,8 @@ def generate_time_spent_data(white_move_list, black_move_list):
 								break
 								
 				cur_locs["black"]["rook"].append(destination_tuple)
-				cur_board[8 - prev_loc[1]][prev_loc[0] - 1] = "e "
-				cur_board[8 - destination_tuple[1]][destination_tuple[0] - 1] = "BR"
+				cur_board[convert_tup(prev_loc)] = "e "
+				cur_board[convert_tup(destination_tuple)] = "BR"
 
 			elif black_move[0].islower():
 				destination = re.search("[a-h][1-8]", black_move).group()
@@ -478,10 +484,15 @@ def generate_time_spent_data(white_move_list, black_move_list):
 							prev_loc = loc
 							del pawn_locs[i]
 							break
+					if cur_board[convert_tup(destination_tuple)] == "e ":
+						en_passant = True
+						captured_square = convert_tup((destination_tuple[0], destination_tuple[1] + 1))
+						cur_board[captured_square)] = "e "
+						cur_locs["white"]["pawn"].remove(captured_square)
 
 				cur_locs["black"]["pawn"].append(destination_tuple)
-				cur_board[8 - prev_loc[1]][prev_loc[0] - 1] = "e "
-				cur_board[8 - destination_tuple[1]][destination_tuple[0] - 1] = "BP"
+				cur_board[convert_tup(prev_loc)] = "e "
+				cur_board[convert_tup(destination_tuple)] = "BP"
 
 			if black_move == "0-0":
 				cur_locs["black"]["rook"].remove((8, 8))
@@ -501,7 +512,7 @@ def generate_time_spent_data(white_move_list, black_move_list):
 				cur_board[0][2] = "BK"
 				cur_board[0][3] = "BR"
 
-			if "x" in white_move:
+			if "x" in black_move and not en_passant:
 				for piece in cur_locs["white"].keys():
 					for i in range(len(cur_locs["white"][piece])):
 						loc = cur_locs["white"][piece][i]
@@ -513,10 +524,10 @@ def generate_time_spent_data(white_move_list, black_move_list):
 		for piece in cur_locs["white"].keys():
 			for loc in cur_locs["white"][piece]:
 				if piece != "all":
-					white_data[piece][8 - loc[1]][loc[0] - 1] += 1
+					white_data[piece][convert_tup(loc)] += 1
 			for loc in cur_locs["black"][piece]:
 				if piece != "all":
-					black_data[piece][8 - loc[1]][loc[0] - 1] += 1
+					black_data[piece][convert_tup(loc)] += 1
 
 	for piece in white_data.keys():
 		white_data[piece] = white_data[piece].astype("int")
@@ -525,10 +536,8 @@ def generate_time_spent_data(white_move_list, black_move_list):
 	return white_data, black_data
  
 
-
-
-
-		
+def convert_tup(tup):
+	return (8 - tup[1], tup[0] - 1)
 
 
 

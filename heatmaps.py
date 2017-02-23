@@ -111,15 +111,19 @@ def create_database(html_file, output_file):
 
 	conn.commit()
 
-	r = c.execute("SELECT DISTINCT move FROM moves WHERE color = ? AND gameid = ? ORDER BY move_num", ("white", "3747763"))
+	r = c.execute("SELECT move FROM moves WHERE color = ? AND gameid = ? ORDER BY move_num", ("white", "3747750"))
 	white_moves = r.fetchall()
-	q = c.execute("SELECT DISTINCT move FROM moves WHERE color = ? AND gameid = ? ORDER BY move_num", ("black", "3747763"))
+	q = c.execute("SELECT move FROM moves WHERE color = ? AND gameid = ? ORDER BY move_num", ("black", "3747750"))
 	black_moves = q.fetchall()
-	s = c.execute("SELECT DISTINCT move FROM moves WHERE color = ? AND gameid = ? ORDER BY move_num", ("white", "3747764"))
+	s = c.execute("SELECT move FROM moves WHERE color = ? AND gameid = ? ORDER BY move_num", ("white", "3747751"))
 	white_moves2 = s.fetchall()
-	t = c.execute("SELECT DISTINCT move FROM moves WHERE color = ? AND gameid = ? ORDER BY move_num", ("black", "3747764"))
+	t = c.execute("SELECT move FROM moves WHERE color = ? AND gameid = ? ORDER BY move_num", ("black", "3747751"))
 	black_moves2 = t.fetchall()
-	return white_moves, black_moves, white_moves2, black_moves2 
+	a = c.execute("SELECT move FROM moves WHERE color = ? AND gameid = ? ORDER BY move_num", ("white", "3747752"))
+	white_moves3 = a.fetchall()
+	b = c.execute("SELECT move FROM moves WHERE color = ? AND gameid = ? ORDER BY move_num", ("black", "3747752"))
+	black_moves3 = b.fetchall()
+	return white_moves, black_moves, white_moves2, black_moves2, white_moves3, black_moves3 
 
 
 
