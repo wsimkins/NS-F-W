@@ -1,0 +1,27 @@
+
+{% comment %}
+
+This is the display for the 'menu' form.
+
+{% endcomment %}
+
+{% block content %}
+<form action="/menu/" method="post">{% csrf_token %}
+
+    <!-- color -->
+    <div class="fieldWrapper">
+        {{ form.color.errors }}
+        <label for="id_name">Color</label>
+        {{ form.color }}
+    </div>
+    <!-- piece -->
+    <div class="fieldWrapper">
+        {{ form.piece.errors }}
+        <label for="id_name">Piece</label>
+        {{ form.piece }}
+    </div>
+    <button type="submit">
+        <i class="fa fa-thumb-tack"></i> Post
+    </button>
+</form>
+{% endblock %}
