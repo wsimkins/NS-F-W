@@ -1,3 +1,4 @@
+import math
 import pandas as pd
 import numpy as np
 import random
@@ -26,27 +27,51 @@ def example_map():
 	sns.plt.show()
 
 def will_example():
-       white_moves_list, bishop_moves_list = heatmaps.create_database("working_html.htm", "output_file.db")
+       white_moves1, black_moves1, white_moves2, black_moves2 = heatmaps.create_database("working_html.htm", "output_file.db")
 
-       df = gda.generate_moved_to_data(white_moves_list, "white", "all", 19)
-       print(df)
+       white_dict1, black_dict1 = gda.generate_time_spent_data(white_moves1, black_moves1)
+       white_dict2, black_dict2 = gda.generate_time_spent_data(white_moves2, black_moves2)
+
+       df = np.zeros((8,8))
+       for array in white_dict1.values():
+              df = np.add(df, array)
+
+       df2 = np.zeros((8,8))
+       for array in white_dict2.values():
+              df2 = np.add(df2, array)
+
+       df = df.astype("int")
+       df2 = df2.astype("int")
 
        xlabels = ["a", "b", "c", "d", "e", "f", "g", "h"]
        ylabels = ["8", "7", "6", "5", "4", "3", "2", "1"]
 
        ax = plt.axes()
        sns.heatmap(df, annot=False, fmt="d", cmap = "coolwarm", xticklabels = xlabels, yticklabels = ylabels)
-       ax.set_title("2007 Czech Open - White Pieces")
+       ax.set_title("Game 1")
 
        sns.plt.show()
-
-       df2 = gda.generate_moved_to_data(bishop_moves_list, "white", "bishop", 19)
 
        ax2 = plt.axes()
        sns.heatmap(df2, annot=True, fmt="d", cmap = "Reds", xticklabels = xlabels, yticklabels = ylabels)
-       ax2.set_title("2007 Czech Open - White Bishops")
+       ax2.set_title("Game 2")
        sns.plt.show()
 
+       df3 = (df / len(white_moves1)) - (df2 / len(white_moves2)) 
+
+       ax3 = plt.axes()
+       sns.heatmap(df3, annot=True, fmt="f", cmap = "Reds", xticklabels = xlabels, yticklabels = ylabels)
+       ax3.set_title("Difference")
+       sns.plt.show()
+
+       sumsq = 0
+       for i in range(len(df3)):
+              for j in range(len(df3[0])):
+                     sumsq += df3[i][j]**2
+
+       sumsq /= 64
+       print("SD", math.sqrt(sumsq))
+       print("mean", np.mean(np.absolute(df3)))
 
 
 

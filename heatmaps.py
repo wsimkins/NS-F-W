@@ -111,11 +111,15 @@ def create_database(html_file, output_file):
 
 	conn.commit()
 
-	r = c.execute("SELECT move FROM moves WHERE color = ? ORDER BY move_num", ("white",))
+	r = c.execute("SELECT DISTINCT move FROM moves WHERE color = ? AND gameid = ? ORDER BY move_num", ("white", "3747763"))
 	white_moves = r.fetchall()
-	q = c.execute("SELECT move FROM moves WHERE color = ? AND substr(move, 1, 1) = ? ORDER BY move_num", ("white", "B"))
-	bishop_moves = q.fetchall()
-	return white_moves, bishop_moves
+	q = c.execute("SELECT DISTINCT move FROM moves WHERE color = ? AND gameid = ? ORDER BY move_num", ("black", "3747763"))
+	black_moves = q.fetchall()
+	s = c.execute("SELECT DISTINCT move FROM moves WHERE color = ? AND gameid = ? ORDER BY move_num", ("white", "3747764"))
+	white_moves2 = s.fetchall()
+	t = c.execute("SELECT DISTINCT move FROM moves WHERE color = ? AND gameid = ? ORDER BY move_num", ("black", "3747764"))
+	black_moves2 = t.fetchall()
+	return white_moves, black_moves, white_moves2, black_moves2 
 
 
 
