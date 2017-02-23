@@ -3,6 +3,7 @@
 #Names: Will Simkins, Natalie Gray, Steven Cooklev
 #github username: wsimkins
 #github password: NSFWpassword1
+#
 
 import bs4
 import re
@@ -49,7 +50,7 @@ def create_db(html_file, output_file):
 	# 'utf-8' codec can't decode byte 0xe9 in position 321564766: invalid continuation byte
 	text = html.read()
 
-	soup = bs4.BeautifulSoup(text, "lxml")
+	soup = bs4.BeautifulSoup(text, "html.parser")
 	
 	# extracts all headers and movelists from the html file
 	headers = soup.find_all("h3")
@@ -175,54 +176,71 @@ def create_db(html_file, output_file):
 
 # query_dict = {white_player: games.white_player = ?}
 # add levenshtein distance for names
-inputs_to_select_statement = {'white_player': 'games.white_player = ?', 'black_player': 'games.black_player = ?',
+# have not added gameid to dictionaries and search query
+# add join statements
+
+games_inputs_select = {'white_player': 'games.white_player = ?', 'black_player': 'games.black_player = ?',
 					'result': 'games.result = ?', 'ECO': 'games.ECO = ?',
 					'year_min': 'games.year >= ?', 'year_max': 'games.year <= ?',
 					'num_moves_min': 'games.num_moves >= ?', 'num_moves_max': 'games.num_moves <= ?',
 					'white_rating_min': 'games.white_rating >= ?', 'white_rating_max': 'games.white_rating <= ?',
 					'black_rating_min': 'games.black_rating >= ?', 'black_rating_max': 'games.black_rating >= ?'}
 
-input_dict_total = {'result': None, 'ECO': None, 
+games_input_dict = {'result': None, 'ECO': None, 
 				'year_min': None, 'year_max': None,
 				'num_moves_min': None, 'num_moves_max': None,
 				'white_player': None, 'black_player': None, 	
 				'white_rating_min': None, 'white_rating_max': None, 
 				'black_rating_min': None, 'black_rating_max': None}
 
-input_dict_sample_1 = {'result': '1-0', 'year_min': 1998, 'white_rating_min': 2000}
-
+input_dict_sample_1 = {'result': '1-0', 'year_min': 1998, 'white_rating_min': 2000, 'white_rating_max': 2400}
 
 def query_table_games(db_filename, input_dict):
 
 	conn = sql.connect(db_filename)
-	cursor_object = conn.cursor()
-	s =  "SELECT * FROM games "
+	c = conn.cursor()
+	s =  "SELECT * FROM games;"
 
 	if input_dict:
-		s += "WHERE "
-		filter_list = []
+		s = s.rstrip(";")
+		s += " WHERE "
+		arg_list = []
+
 	for key, value in input_dict.items():
-		filter_list.append(value)
-		s += str(inputs_to_select_statement[key]) + ' '
+		arg_list.append(value)
+		s += str(games_inputs_select[key]) + ' AND '
+	s = s.rstrip(" AND ")
+	s += ";"
 
+	r = c.execute(s, arg_list)
+	return(r.fetchall())
+	conn.close()
 
-	s = "SELECT * FROM games WHERE games.white_player = ? AND games.black_player = ? \
-	AND games.white_rating = ? AND games.black_rating = ? AND games.ECO = ? AND games.year = ?"
-	r = c.execute(s, (white_player, black_player, result, num_moves, white_rating, black_rating, ECO, year))
-	r.fetchall()
-	connection.close()
+moves_inputs_select = {'move': 'moves.move = ?', 'color': 'moves.color = ?', 
+					'num_moves_min': 'moves.move_num >= ?', 'num_moves_max': 'moves.move_num >= ?'}
 
+def query_table_moves(db_filename, input_dict):
 
-
-
-def query_table_moves(db_filename, w_move = None, b_move = None, num_moves = None):
 	conn = sql.connect(db_filename)
-	cursor_object = conn.cursor()
+	c = conn.cursor()
 
-	s = "SELECT * FROM moves WHERE w_move IN moves.white_moves AND b_move in moves.black_moves AND moves.num_moves = ?"
-	r = c.execute(s, (white_player, black_player, result, num_moves, white_rating, black_rating, ECO, year))
-	r.fetchall()
-	connection.close()
+	s =  "SELECT * FROM moves;"
+
+	if input_dict:
+		s = s.rstrip(";")
+		s += " WHERE "
+		arg_list = []
+
+	for key, value in input_dict.items():
+		arg_list.append(value)
+		s += str(moves_inputs_select[key]) + ' AND '
+	s = s.rstrip(" AND ")
+	s += ";"
+
+	r = c.execute(s, arg_list)
+	return(r.fetchall())
+	conn.close()
+
 
 '''
 	r = c.execute("SELECT move FROM moves WHERE color = ? ORDER BY move_num", ("white",))
