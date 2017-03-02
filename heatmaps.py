@@ -10,6 +10,8 @@ import re
 import sqlite3 as sql
 
 
+
+
 def clean_data(html_input_file, html_output_file):
 	'''
 	Cleans a given html_file and outputs a new html_file with annotations removed
@@ -33,7 +35,6 @@ def create_db(html_file, output_file):
 	Given an html file containing information about chess games, creates 
 	a games database and a moves database in SQL with this information.
 	'''
-
 
 	conn = sql.connect(output_file, timeout=10)
 	c = conn.cursor()
@@ -249,3 +250,19 @@ def query_table_moves(db_filename, input_dict):
 	bishop_moves = q.fetchall()
 	return white_moves, bishop_moves
 '''
+#create_db('mega_clean_0_600k.htm', 'mega')
+
+files = ['/media/scooklev/USB DISK/NSFW/mega_clean_0_600k.htm', 
+		'/media/scooklev/USB DISK/NSFW/mega_clean_600k_1.2_mil.htm', 
+		'/media/scooklev/USB DISK/NSFW/mega_clean_1.2_1.8_mil.htm',
+		 '/media/scooklev/USB DISK/NSFW/mega_clean_1.8_2.4_mil.htm', 
+		 '/media/scooklev/USB DISK/NSFW/mega_clean_2.4_3.0_mil.htm', 
+		 '/media/scooklev/USB DISK/NSFW/mega_clean_3.0_3.6_mil.htm',
+		 '/media/scooklev/USB DISK/NSFW/mega_clean_3.6_4.2_mil.htm', 
+		 '/media/scooklev/USB DISK/NSFW/mega_clean_4.2_4.8_mil.htm',
+		 '/media/scooklev/USB DISK/NSFW/mega_clean_4.8_end_mil.htm']
+
+for html_file in files:
+	print('starting step', html_file)
+	create_db(html_file, 'mega.db')
+	print('completed step', html_file)
