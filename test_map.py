@@ -34,15 +34,14 @@ def example():
        white_dict2, black_dict2 = gda.generate_time_spent_data(white_moves2, black_moves2)
        white_dict3, black_dict3 = gda.generate_time_spent_data(white_moves3, black_moves3)
 
+       df3 = gda.generate_captures_heatmap(white_moves1 + white_moves2 + white_moves3 + black_moves1 + black_moves2 + black_moves3)
+       print(gda.calculate_trade_statistics(white_moves2, black_moves2))
+
+
        df = np.zeros((8,8))
        for array in white_dict1.values():
               df = np.add(df, array)
 
-       #for array in white_dict3.values():
-        #      df = np.add(df, array)
-
-       #for array in white_dict2.values():
-        #      df = np.add(df, array)
               
        df2 = np.zeros((8,8))
        for array in black_dict1.values():
@@ -51,12 +50,10 @@ def example():
        for array in black_dict3.values():
               df2 = np.add(df2, array)
 
-       #for array in black_dict2.values():
-         #     df2 = np.add(df2, array)
-
 
        df = df.astype("int")
        df2 = df2.astype("int")
+       df3 = df3.astype("int")
 
        xlabels = ["a", "b", "c", "d", "e", "f", "g", "h"]
        ylabels = ["8", "7", "6", "5", "4", "3", "2", "1"]
@@ -75,6 +72,10 @@ def example():
 
        compare_heatmaps(df, df2, len(white_moves1) + len(white_moves3), len(black_moves1) + len(black_moves3))
 
+       plt.figure(2)
+       sns.heatmap(df3, annot=False, fmt="d", cmap = "coolwarm", xticklabels = xlabels, yticklabels = ylabels)
+       plt.title("Captures Heatmap")
+       sns.plt.show()
 
 
 def compare_heatmaps(df1, df2, num_moves1, num_moves2):

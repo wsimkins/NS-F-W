@@ -287,12 +287,30 @@ def generate_time_spent_data(white_move_list, black_move_list):
 				if cur_board[convert_tup(destination_tuple)] == "e ":
 					en_passant = True
 					captured_square = convert_tup((destination_tuple[0], destination_tuple[1] - 1))
-					cur_board[captured_square)] = "e "
+					cur_board[captured_square] = "e "
 					cur_locs["black"]["pawn"].remove(captured_square)
 
-			cur_locs["white"]["pawn"].append(destination_tuple)
-			cur_board[convert_tup(prev_loc)] = "e "
-			cur_board[convert_tup(destination_tuple)] = "WP"
+
+			if "=" not in white_move:
+				cur_locs["white"]["pawn"].append(destination_tuple)
+				cur_board[convert_tup(prev_loc)] = "e "
+				cur_board[convert_tup(destination_tuple)] = "WP"
+
+			else:
+				cur_board[convert_tup(prev_loc)] = "e "
+				if "Q" in white_move:
+					cur_locs["white"]["queen"].append(destination_tuple)
+					cur_board[convert_tup(destination_tuple)] = "WQ"
+				elif "R" in white_move:
+					cur_locs["white"]["rook"].append(destination_tuple)
+					cur_board[convert_tup(destination_tuple)] = "WR"
+				elif "B" in white_move:
+					cur_locs["white"]["bishop"].append(destination_tuple)
+					cur_board[convert_tup(destination_tuple)] = "WB"
+				elif "N" in white_move:
+					cur_locs["white"]["knight"].append(destination_tuple)
+					cur_board[convert_tup(destination_tuple)] = "WN"
+
 
 		if white_move == "0-0":
 			cur_locs["white"]["rook"].remove((8, 1))
@@ -312,6 +330,8 @@ def generate_time_spent_data(white_move_list, black_move_list):
 			cur_board[7][2] = "WK"
 			cur_board[7][3] = "WR"
 
+
+
 		if "x" in white_move and not en_passant:
 			for piece in cur_locs["black"].keys():
 				for i in range(len(cur_locs["black"][piece])):
@@ -319,6 +339,7 @@ def generate_time_spent_data(white_move_list, black_move_list):
 					if loc == destination_tuple:
 						del cur_locs["black"][piece][i]
 						break
+
 
 		en_passant = False
 
@@ -487,12 +508,29 @@ def generate_time_spent_data(white_move_list, black_move_list):
 					if cur_board[convert_tup(destination_tuple)] == "e ":
 						en_passant = True
 						captured_square = convert_tup((destination_tuple[0], destination_tuple[1] + 1))
-						cur_board[captured_square)] = "e "
+						cur_board[captured_square] = "e "
 						cur_locs["white"]["pawn"].remove(captured_square)
 
-				cur_locs["black"]["pawn"].append(destination_tuple)
-				cur_board[convert_tup(prev_loc)] = "e "
-				cur_board[convert_tup(destination_tuple)] = "BP"
+				if "=" not in black_move:
+					cur_locs["black"]["pawn"].append(destination_tuple)
+					cur_board[convert_tup(prev_loc)] = "e "
+					cur_board[convert_tup(destination_tuple)] = "BP"
+
+				else:
+					cur_board[convert_tup(prev_loc)] = "e "
+					if "Q" in black_move:
+						cur_locs["black"]["queen"].append(destination_tuple)
+						cur_board[convert_tup(destination_tuple)] = "BQ"
+					elif "R" in black_move:
+						cur_locs["black"]["rook"].append(destination_tuple)
+						cur_board[convert_tup(destination_tuple)] = "BR"
+					elif "B" in black_move:
+						cur_locs["black"]["bishop"].append(destination_tuple)
+						cur_board[convert_tup(destination_tuple)] = "BB"
+					elif "N" in black_move:
+						cur_locs["black"]["knight"].append(destination_tuple)
+						cur_board[convert_tup(destination_tuple)] = "BN"
+
 
 			if black_move == "0-0":
 				cur_locs["black"]["rook"].remove((8, 8))
@@ -520,7 +558,6 @@ def generate_time_spent_data(white_move_list, black_move_list):
 							del cur_locs["white"][piece][i]
 							break
 
-
 		for piece in cur_locs["white"].keys():
 			for loc in cur_locs["white"][piece]:
 				if piece != "all":
@@ -535,6 +572,58 @@ def generate_time_spent_data(white_move_list, black_move_list):
 
 	return white_data, black_data
  
+
+def generate_captures_heatmap(move_list):
+	heatmap_data = np.zeros((8,8))
+	for move in move_list:
+		move = move[0]
+		if "x" in move:
+			destination = re.search("[a-h][1-8]", move).group()
+			destination_tuple = (LETTER_TO_NUM[destination[0]], int(destination[1]))
+			heatmap_data[convert_tup(destination_tuple)] += 1
+	return heatmap_data
+
+
+def calculate_trade_statistics(white_move_list, black_move_list):
+	white_captures = 0
+	black_captures = 0
+	white_recaptures = 0
+	black_recaptures = 0
+
+	for move_num in range(len(white_move_list)):
+		white_move = white_move_list[move_num][0]
+		if "x" in white_move:
+			white_captures += 1
+			print("wc", white_captures)
+			black_move = black_move_list[move_num - 1][0]
+			if "x" in black_move:
+				white_capture_loc = re.search("[a-h][1-8]", white_move).group()
+				black_capture_loc = re.search("[a-h][1-8]", black_move).group()
+				if white_capture_loc == black_capture_loc:
+					white_recaptures += 1
+					print("wr", white_recaptures)
+
+	for move_num in range(len(black_move_list)):
+		black_move = black_move_list[move_num][0]
+		if "x" in black_move:
+			black_captures += 1
+			print("bc", black_captures)
+			white_move = white_move_list[move_num][0]
+			if "x" in white_move:
+				black_capture_loc = re.search("[a-h][1-8]", black_move).group()
+				white_capture_loc = re.search("[a-h][1-8]", white_move).group()
+				if white_capture_loc == black_capture_loc:
+					black_recaptures += 1
+					print("br", black_recaptures)
+
+	white_capture_percent = white_captures/len(white_move_list)
+	black_capture_percent = black_captures/len(black_move_list)
+	white_recapture_percent = white_recaptures/white_captures
+	black_recapture_percent = black_recaptures/black_captures
+
+	return white_capture_percent, black_capture_percent, white_recapture_percent, black_recapture_percent
+
+
 
 def convert_tup(tup):
 	return (8 - tup[1], tup[0] - 1)
