@@ -105,5 +105,3 @@ def compare_heatmaps(df1, df2, num_moves1, num_moves2):
        
 
 
-
-
