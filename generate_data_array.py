@@ -26,13 +26,13 @@ KNIGHT_DIFFS = [(1, 2), (1, -2), (-1, 2), (-1, -2), (2, 1), (2, -1), (-2, 1), (-
 
 def generate_moved_to_data(move_list, color, piece, num_games):
 	heatmap_data = np.zeros((8,8))
-	starting_squares = STARTING_SQUARES[color][piece]
-	for starting_square in starting_squares:
-		heatmap_data[tuple(np.subtract(starting_square, (1,1)))] += num_games
+	#starting_squares = STARTING_SQUARES[color][piece]
+	#for starting_square in starting_squares:
+		#heatmap_data[tuple(np.subtract(starting_square, (1,1)))] += num_games
 
 	for move_tup in move_list:
 		move = move_tup[0]
-		destination_tuples = None
+		destination_tuples = []
 
 		destination = re.search("[a-h][1-8]", move)
 		if destination:
@@ -182,7 +182,7 @@ def generate_time_spent_data(white_move_list, black_move_list):
 						del knight_locs[i]
 						break
 			elif disambig_num:
-				rank_num = int(disambig_num.group()[1])
+				rank_num = int(LETTER_TO_NUM[disambig_num.group()[1]])
 				for i in range(len(knight_locs)):
 					loc = knight_locs[i]
 					if loc[1] == rank_num:
@@ -222,7 +222,7 @@ def generate_time_spent_data(white_move_list, black_move_list):
 						del rook_locs[i]
 						break
 			elif disambig_num:
-				rank_num = int(disambig_num.group()[1])
+				rank_num = int(LETTER_TO_NUM[disambig_num.group()[1]])
 				for i in range(len(rook_locs)):
 					loc = rook_locs[i]
 					if loc[1] == rank_num:
@@ -235,7 +235,6 @@ def generate_time_spent_data(white_move_list, black_move_list):
 					if loc[0] == destination_tuple[0]:
 						blocked = False
 						for j in range(min(loc[1], destination_tuple[1]) + 1, max(loc[1], destination_tuple[1])):
-							print(j)
 							if cur_board[8 - loc[0]][j - 1] != "e ":
 								blocked = True
 								break
@@ -284,14 +283,15 @@ def generate_time_spent_data(white_move_list, black_move_list):
 						prev_loc = loc
 						del pawn_locs[i]
 						break
+
 				if cur_board[convert_tup(destination_tuple)] == "e ":
 					en_passant = True
 					captured_square = convert_tup((destination_tuple[0], destination_tuple[1] - 1))
 					cur_board[captured_square] = "e "
-					cur_locs["black"]["pawn"].remove(captured_square)
+					cur_locs["black"]["pawn"].remove((destination_tuple[0], destination_tuple[1] - 1))
 
 
-			if "=" not in white_move:
+			if destination_tuple[1] != 8:
 				cur_locs["white"]["pawn"].append(destination_tuple)
 				cur_board[convert_tup(prev_loc)] = "e "
 				cur_board[convert_tup(destination_tuple)] = "WP"
@@ -403,7 +403,7 @@ def generate_time_spent_data(white_move_list, black_move_list):
 							del knight_locs[i]
 							break
 				elif disambig_num:
-					rank_num = int(disambig_num.group()[1])
+					rank_num = int(LETTER_TO_NUM[disambig_num.group()[1]])
 					for i in range(len(knight_locs)):
 						loc = knight_locs[i]
 						if loc[1] == rank_num:
@@ -443,7 +443,7 @@ def generate_time_spent_data(white_move_list, black_move_list):
 							del rook_locs[i]
 							break
 				elif disambig_num:
-					rank_num = int(disambig_num.group()[1])
+					rank_num = int(LETTER_TO_NUM[disambig_num.group()[1]])
 					for i in range(len(rook_locs)):
 						loc = rook_locs[i]
 						if loc[1] == rank_num:
@@ -509,9 +509,9 @@ def generate_time_spent_data(white_move_list, black_move_list):
 						en_passant = True
 						captured_square = convert_tup((destination_tuple[0], destination_tuple[1] + 1))
 						cur_board[captured_square] = "e "
-						cur_locs["white"]["pawn"].remove(captured_square)
+						cur_locs["white"]["pawn"].remove((destination_tuple[0], destination_tuple[1] + 1))
 
-				if "=" not in black_move:
+				if destination_tuple[1] != 1:
 					cur_locs["black"]["pawn"].append(destination_tuple)
 					cur_board[convert_tup(prev_loc)] = "e "
 					cur_board[convert_tup(destination_tuple)] = "BP"
@@ -594,27 +594,23 @@ def calculate_trade_statistics(white_move_list, black_move_list):
 		white_move = white_move_list[move_num][0]
 		if "x" in white_move:
 			white_captures += 1
-			print("wc", white_captures)
 			black_move = black_move_list[move_num - 1][0]
 			if "x" in black_move:
 				white_capture_loc = re.search("[a-h][1-8]", white_move).group()
 				black_capture_loc = re.search("[a-h][1-8]", black_move).group()
 				if white_capture_loc == black_capture_loc:
 					white_recaptures += 1
-					print("wr", white_recaptures)
 
 	for move_num in range(len(black_move_list)):
 		black_move = black_move_list[move_num][0]
 		if "x" in black_move:
 			black_captures += 1
-			print("bc", black_captures)
 			white_move = white_move_list[move_num][0]
 			if "x" in white_move:
 				black_capture_loc = re.search("[a-h][1-8]", black_move).group()
 				white_capture_loc = re.search("[a-h][1-8]", white_move).group()
 				if white_capture_loc == black_capture_loc:
 					black_recaptures += 1
-					print("br", black_recaptures)
 
 	white_capture_percent = white_captures/len(white_move_list)
 	black_capture_percent = black_captures/len(black_move_list)
