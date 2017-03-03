@@ -103,30 +103,87 @@ class MoveNumberRange(IntegerRange):
 RANGE_WIDGET = forms.widgets.MultiWidget(widgets=(forms.widgets.NumberInput,
                                                   forms.widgets.NumberInput))
 
-class PlayerNames(forms.MultiValueField):
-	def __init__(self, *args, **kwargs):
-        fields = (forms.IntegerField(),
-                  forms.ChoiceField(label='Building', choices=PLAYERS, required=False),)
-        super(BuildingWalkingTime, self).__init__(
-                                           fields=fields,
-                                           *args, **kwargs)
 
-class ResultOptions(for)
-
-
-
-
-
-
-
-
-
-
-
-
-
+class SearchForm(forms.Form):
+    years = YearRange(
+                label='Year(s)',
+                help_text='1475-2013',
+                widget=RANGE_WIDGET,
+                required=False)
+    num_move = MoveNumberRange(
+                label='Move Numbers',
+                help_text='maximum 300 moves',
+                widget=RANGE_WIDGET,
+                required=False)
+    ratings = RatingsRange(
+                label='Player Ratings (Elo)',
+                help_text='maximum 3000',
+                widget=RANGE_WIDGET,
+                required=False)
+    result = forms.ChoiceField(label='Result', choices=RESULTS, required=False)
+    ecos = forms.ChoiceField(label='ECO (opening)', choices=ECOS, required=False)
+    players = forms.ChoiceField(label='Player Name', choices=PLAYERS, required=False)
 
 
+def home(request):
+    context = {}
+        res = None
+        if request.method == 'GET':
+            # create a form instance and populate it with data from the request:
+            form = SearchForm(request.GET)
+            # check whether it's valid:
+            if form.is_valid():
+
+                # Convert form data to an args dictionary for heatmaps.py
+                args = {}
+                years = form.cleaned_data['years']
+                if year:
+                    args['year_lower'] = years[0]
+                    args['year_upper'] = years[1]
+                num_move = form.cleaned_data['num_move']
+                if num_move:
+                    args['moves_lower'] = num_move[0]
+                    args['moves_upper'] = num_move[1]
+                ratings = form.cleaned_data['ratings']
+                if ratings:
+                    args['rating_lower'] = ratings[0]
+                    args['rating_upper'] = ratings[1]
+
+                ecos = form.cleaned_data['ecos']
+                if ecos:
+                    args['ecos'] = ecos
+                results = form.cleaned_data['results']
+                if results:
+                    args['results'] = results
+                players = form.cleaned_data['players']
+                if players:
+                    args['players'] = players
+
+                res = None
+        else:
+            form = SearchForm()
+
+        # Handle different responses of res
+        if res is None:
+            context['result'] = None
+        elif isinstance(res, str):
+            context['result'] = None
+            context['err'] = res
+            result = None
+            cols = None
+        else:
+            columns, result = res
+
+            # Wrap in tuple if result is not already
+            if result and isinstance(result[0], str):
+                result = [(r,) for r in result]
+
+            context['result'] = result
+            context['num_results'] = len(result)
+            context['columns'] = [COLUMN_NAMES.get(col, col) for col in columns]
+
+        context['form'] = form
+        return render(request, 'index.html', context)
 
 
 class Menu_Page(FormView):
