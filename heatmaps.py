@@ -11,7 +11,6 @@ import sqlite3 as sql
 
 
 
-
 def clean_data(html_input_file, html_output_file):
 	'''
 	Cleans a given html_file and outputs a new html_file with annotations removed
@@ -39,12 +38,28 @@ def create_db(html_file, output_file):
 	conn = sql.connect(output_file, timeout=10)
 	c = conn.cursor()
 	
+	# set auto-vacuum to on to reduce the size of the file
+	c.execute("PRAGMA auto_vacuum = FULL;")
+
 	# initializes both SQL tables
-	# NOTE REMOVED PRIMARY KEY FROM GAME ID BECAUSE I GOT UNIQUE CONSTRAINT FAILED -WILL
-	c.execute('''CREATE TABLE IF NOT EXISTS games (gameid text, white_player text, 
-		black_player text, white_rating integer, black_rating integer, result text, 
-		ECO text, year integer, num_move integer)''')
-	c.execute('''CREATE TABLE IF NOT EXISTS moves (gameid text, move text, color text, move_num integer)''')
+	c.execute('''CREATE TABLE IF NOT EXISTS games (
+		gameid INT PRIMARY KEY, 
+		white_player TEXT, 
+		black_player TEXT, 
+		white_rating INT, 
+		black_rating INT, 
+		result TEXT, 
+		ECO TEXT, 
+		year INT, 
+		num_move INT)''')
+
+
+	c.execute('''CREATE TABLE IF NOT EXISTS moves (
+		gameid INT, 
+		move TEXT, 
+		color TEXT, 
+		move_num INT)''')
+
 
 	html = open(html_file, "r", encoding='ISO-8859-1')
 	# html.seek(4121)
@@ -60,9 +75,10 @@ def create_db(html_file, output_file):
 
 	for i in range(len(headers)):
 		header = headers[i].text
-		movelist = movelists[i] # removed .text in order to remove annotations - Steven
+		movelist = movelists[i].text # removed .text in order to remove annotations, then added back - Steven
+		
+		'''
 		clean_moves = movelist.find_all("b")
-
 		# Check each game for annotations and remove the annotations
 		if not clean_moves:
 			movelist = movelist.text
@@ -72,6 +88,8 @@ def create_db(html_file, output_file):
 			clean_moves = re.sub("</b>", '', clean_moves)
 			# clean_moves = clean_moves.strip("\n") # I don't think the strip here is necessary?
 			movelist = clean_moves
+		'''
+		
 
 		# extracts gameid from the header
 		gameid = re.search("\d+", header).group()
@@ -131,36 +149,26 @@ def create_db(html_file, output_file):
 			white_move = split_move[0].strip()
 			black_move = split_move[1].strip()
 			c.execute("INSERT INTO moves VALUES " + \
-				str((gameid, white_move, "white", i+1))) 
+				str((gameid, white_move, "white", i + 1))) 
 
 			# removes the result from the list of black moves if the game ended
 			# in a white move
-			if not black_move[-4:] == "1-0 " or black_move[-4:] == "0-1 " or black_move[-4:] == "1/2 ":
+			if not black_move[-3:] == "1-0" or black_move[-3:] == "0-1" or black_move[-3:] == "1/2":
 				c.execute("INSERT INTO moves VALUES " + \
-					str((gameid, black_move, "black", i+1))) 
+					str((gameid, black_move, "black", i + 1))) 
 
-		# inserts all data into games table for the current header and movelist
-		c.execute("INSERT INTO games VALUES " + \
-			str((gameid, white_player, black_player, white_rating, 
-				black_rating, result, ECO, year, num_moves)))
-		
-		# separates the list of moves into strings representing individual moves
-		# and then inserts these moves into the moves table
-		for i in range(len(moves)):
-			split_move = moves[i].split()
-			white_move = split_move[0].strip()
-			black_move = split_move[1].strip()
-			c.execute("INSERT INTO moves VALUES " + \
-				str((gameid, white_move, "white", i+1))) 
-
-			# removes the result from the list of black moves if the game ended
-			# in a white move
-			if not black_move[-4:] == "1-0 " or black_move[-4:] == "0-1 " or black_move[-4:] == "1/2 ":
-				c.execute("INSERT INTO moves VALUES " + \
-					str((gameid, black_move, "black", i+1))) 
-
+	
 	conn.commit()
 
+
+
+
+
+
+
+
+
+def test_queries():
 	r = c.execute("SELECT move FROM moves WHERE color = ? AND gameid = ? ORDER BY move_num", ("white", "3747750"))
 	white_moves = r.fetchall()
 	q = c.execute("SELECT move FROM moves WHERE color = ? AND gameid = ? ORDER BY move_num", ("black", "3747750"))
@@ -262,7 +270,9 @@ files = ['/media/scooklev/USB DISK/NSFW/mega_clean_0_600k.htm',
 		 '/media/scooklev/USB DISK/NSFW/mega_clean_4.2_4.8_mil.htm',
 		 '/media/scooklev/USB DISK/NSFW/mega_clean_4.8_end_mil.htm']
 
-for html_file in files:
-	print('starting step', html_file)
-	create_db(html_file, 'mega.db')
-	print('completed step', html_file)
+
+def generate_db():
+	for html_file in files:
+		print('starting step', html_file)
+		create_db(html_file, 'mega.db')
+		print('completed step', html_file)
