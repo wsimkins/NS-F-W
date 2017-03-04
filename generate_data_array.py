@@ -7,28 +7,14 @@ import numpy as np
 import re
 
 
-STARTING_SQUARES = {"white":{"rook":[(1, 1), (8, 1)], "knight":[(2, 1), (7, 1)],
-	"bishop":[(3, 1), (6, 1)], "queen":[(4, 1)], "king":[(5, 1)], 
-	"pawn":[(1, 2), (2, 2), (3, 2), (4, 2), (5, 2), (6, 2), (7, 2), (8, 2)],
-	"all":[(1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 1), (7, 1), (8, 1),
-	 (1, 2), (2, 2), (3, 2), (4, 2), (5, 2), (6, 2), (7, 2), (8, 2)]}, 
-	"black":{"rook":[(1, 8), (8, 8)], "knight":[(2, 8), (7, 8)], 
-	"bishop":[(3, 8), (6, 8)], "queen":[(4,8)], "king":[(5, 8)], 
-	"pawn":[(1, 7), (2, 7), (3, 7), (4, 7), (5, 7), (6, 7), (7, 7), (8, 7)],
-	"all":[(1, 7), (2, 7), (3, 7), (4, 7), (5, 7), (6, 7), (7, 7), (8, 7),
-	 (1, 8), (2, 8), (3, 8), (4, 8), (5, 8), (6, 8), (7, 8), (8, 8)]}}
-
 LETTER_TO_NUM = {"a":1, "b":2, "c":3, "d":4, "e":5, "f":6, "g":7, "h":8}
 PIECE_TO_LETTER = {"rook":"R", "knight":"N", "bishop":"B", "queen":"Q", "king":"K", "pawn":"P"}
 KNIGHT_DIFFS = [(1, 2), (1, -2), (-1, 2), (-1, -2), (2, 1), (2, -1), (-2, 1), (-2, -1)]
 
 
 
-def generate_moved_to_data(move_list, color, piece, num_games):
+def generate_moved_to_data(move_list, color, piece):
 	heatmap_data = np.zeros((8,8))
-	#starting_squares = STARTING_SQUARES[color][piece]
-	#for starting_square in starting_squares:
-		#heatmap_data[tuple(np.subtract(starting_square, (1,1)))] += num_games
 
 	for move_tup in move_list:
 		move = move_tup[0]
@@ -82,7 +68,7 @@ def generate_moved_to_data(move_list, color, piece, num_games):
 
 
 def generate_time_spent_data(white_move_list, black_move_list):
-	STARTING_SQUAREZ = {"white":{"rook":[(1, 1), (8, 1)], "knight":[(2, 1), (7, 1)],
+	STARTING_SQUARES = {"white":{"rook":[(1, 1), (8, 1)], "knight":[(2, 1), (7, 1)],
 	"bishop":[(3, 1), (6, 1)], "queen":[(4, 1)], "king":[(5, 1)], 
 	"pawn":[(1, 2), (2, 2), (3, 2), (4, 2), (5, 2), (6, 2), (7, 2), (8, 2)],
 	"all":[(1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 1), (7, 1), (8, 1),
@@ -106,12 +92,12 @@ def generate_time_spent_data(white_move_list, black_move_list):
        ["WP", "WP", "WP", "WP", "WP", "WP", "WP", "WP"],
        ["WR", "WN", "WB", "WQ", "WK", "WB", "WN", "WR"]])
 
-	cur_locs = STARTING_SQUAREZ
+	cur_locs = STARTING_SQUARES
 
 
 	for piece in white_data.keys():
-		white_ss = STARTING_SQUAREZ["white"][piece]
-		black_ss = STARTING_SQUAREZ["black"][piece]
+		white_ss = STARTING_SQUARES["white"][piece]
+		black_ss = STARTING_SQUARES["black"][piece]
 		for i in range(len(white_ss)):
 			white_data[piece][8 - white_ss[i][1]][white_ss[i][0] - 1] = 1
 			black_data[piece][8 - black_ss[i][1]][black_ss[i][0] - 1] = 1
