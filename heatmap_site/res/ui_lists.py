@@ -3,12 +3,15 @@ import csv
 
 def generate_lists():
 
-	connection = sqlite3.connect(??????????????)
+#destination: cp cooklev /heatmap_site/res
+	connection = sqlite3.connect("cooklev")
 	c = connection.cursor()
 
 	# gets lists of unique values from sql database
-	player = c.execute('''SELECT DISTINCT white_player AND black_player FROM games''').fetchall()
-	rating = c.execute('''SELECT DISTINCT white_rating AND black_rating FROM games'''). fetchall()
+	player_w = c.execute('''SELECT DISTINCT white_player FROM games''').fetchall()
+	player_b = c.execute('''SELECT DISTINCT black_player FROM games''').fetchall()
+	player = list(set(player_w + player_b))
+
 	result = c.execute('''SELECT DISTINCT result FROM games''').fetchall()
 	ECO = c.execute('''SELECT DISTINCT ECO FROM games''').fetchall()
 	year = c.execute('''SELECT DISTINCT year FROM games''').fetchall()
@@ -17,37 +20,31 @@ def generate_lists():
 	connection.close()
 
 	# write lists of unique values to file
-	f = open('player_list.csv', 'wb')
+	f = open('player_list.csv', 'w')
 	w = csv.writer(f, delimiter="|")
 	for row in player:
-		w.writerow(row)
+		w.writerow([row[0].replace(",", " ")])
 	f.close
 
-	f = open('rating_list.csv', 'wb')
-	w = csv.writer(f, delimiter="|")
-	for row in rating:
-		w.writerow(row)
-	f.close
-
-	f = open('result_list.csv', 'wb')
+	f = open('result_list.csv', 'w')
 	w = csv.writer(f, delimiter="|")
 	for row in result:
 		w.writerow(row)
 	f.close
 
-	f = open('ECO_list.csv', 'wb')
+	f = open('ECO_list.csv', 'w')
 	w = csv.writer(f, delimiter="|")
 	for row in ECO:
 		w.writerow(row)
 	f.close
 
-	f = open('year_list.csv', 'wb')
+	f = open('year_list.csv', 'w')
 	w = csv.writer(f, delimiter="|")
 	for row in year:
 		w.writerow(row)
 	f.close
 
-	f = open('num_move_list.csv', 'wb')
+	f = open('num_move_list.csv', 'w')
 	w = csv.writer(f, delimiter="|")
 	for row in num_move:
 		w.writerow(row)
