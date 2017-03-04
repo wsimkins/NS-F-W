@@ -11,15 +11,19 @@ from django.views.generic import FormView
 from .models import Piece_color_selection
 from .forms import Piece_color_selection_form
 
+
 NOPREF_STR = 'No preference'
 RES_DIR = os.path.join(os.path.dirname(__file__), '..', 'res')
 COLUMN_NAMES = dict(
-	    player='Player Name'
-	    rating='Rating'
-	    result='Result'
-	    ECO='ECO'
-	    year='Year'
-	    num_move='Number of Moves'
+	    player='player',
+	    rating='rating',
+	    result='result',
+	    ECO='ECO',
+	    year='year',
+	    num_move='number of Moves',
+        color='color',
+        piece="piece",
+
 )
 
 
@@ -54,6 +58,13 @@ RESULTS = _build_dropdown([None] + _load_res_column('result_list.csv'))
 ECOS = _build_dropdown([None] + _load_res_column('ECO_list.csv'))
 YEARS = _build_dropdown([None] + _load_res_column('year_list.csv'))
 NUM_MOVES = _build_dropdown([None] + _load_res_column('num_move_list.csv'))
+PIECES = _build_dropdown([None] + ["King", "Queen", "Rook", "Knight", "Bishop", "Pawn", "all"])
+COLORS = _build_dropdown([None] + ["White", "Black"])
+
+
+class Piece_color_selection(models.Model):
+    color = models.CharField(max_length=6, choices=COLOR_CHOICES)
+    piece = models.CharField(max_length=3, choices=PIECE_CHOICES)
 
 class IntegerRange(forms.MultiValueField):
 	def __init__(self, *args, **kwargs):
@@ -123,6 +134,8 @@ class SearchForm(forms.Form):
     result = forms.ChoiceField(label='Result', choices=RESULTS, required=False)
     ecos = forms.ChoiceField(label='ECO (opening)', choices=ECOS, required=False)
     players = forms.ChoiceField(label='Player Name', choices=PLAYERS, required=False)
+    color = forms.ChoiceField(label='Color', choices=COLOR_CHOICES, required=False)
+    piece = forms.ChoiceField(label='Piece', choices=PIECE_CHOICES, required=False)
 
 
 def home(request):
@@ -159,6 +172,13 @@ def home(request):
                 if players:
                     args['players'] = players
 
+                color = form.cleaned_data['color']
+                if color:
+                    args['color'] = color
+                piece = form.cleaned_data['piece']
+                if piece:
+                    args['piece'] = piece
+
                 res = None
         else:
             form = SearchForm()
@@ -183,13 +203,13 @@ def home(request):
             context['columns'] = [COLUMN_NAMES.get(col, col) for col in columns]
 
         context['form'] = form
-        return render(request, 'index.html', context)
+        return render(request, 'menu.html', context)
 
 
-class Menu_Page(FormView):
+"""class Menu_Page(FormView):
 	template_name = 'menu.html'
 	success_url = '/NSFW/'
 	form_class = Piece_color_selection_form
 
 	def form_valid(self, form):
-		return HttpResponse("this should probably be a heatmap")
+		return HttpResponse("this should probably be a heatmap")"""
