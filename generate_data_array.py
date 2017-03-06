@@ -570,36 +570,42 @@ def generate_captures_heatmap(move_list):
 	return heatmap_data
 
 
-def calculate_trade_statistics(white_move_list, black_move_list):
+def calculate_trade_statistics(white_move_lists, black_move_lists, num_moves_white, num_moves_black):
 	white_captures = 0
 	black_captures = 0
 	white_recaptures = 0
 	black_recaptures = 0
+	num_white_moves = 0
+	num_black_moves = 0
 
-	for move_num in range(len(white_move_list)):
-		white_move = white_move_list[move_num][0]
-		if "x" in white_move:
-			white_captures += 1
-			black_move = black_move_list[move_num - 1][0]
-			if "x" in black_move:
-				white_capture_loc = re.search("[a-h][1-8]", white_move).group()
-				black_capture_loc = re.search("[a-h][1-8]", black_move).group()
-				if white_capture_loc == black_capture_loc:
-					white_recaptures += 1
+	for i in range(len(white_move_lists)):
+		white_move_list = white_move_lists[i]
+		black_move_list = black_move_lists[i]
 
-	for move_num in range(len(black_move_list)):
-		black_move = black_move_list[move_num][0]
-		if "x" in black_move:
-			black_captures += 1
+		for move_num in range(len(white_move_list)):
 			white_move = white_move_list[move_num][0]
 			if "x" in white_move:
-				black_capture_loc = re.search("[a-h][1-8]", black_move).group()
-				white_capture_loc = re.search("[a-h][1-8]", white_move).group()
-				if white_capture_loc == black_capture_loc:
-					black_recaptures += 1
+				white_captures += 1
+				black_move = black_move_list[move_num - 1][0]
+				if "x" in black_move:
+					white_capture_loc = re.search("[a-h][1-8]", white_move).group()
+					black_capture_loc = re.search("[a-h][1-8]", black_move).group()
+					if white_capture_loc == black_capture_loc:
+						white_recaptures += 1
 
-	white_capture_percent = white_captures/len(white_move_list)
-	black_capture_percent = black_captures/len(black_move_list)
+		for move_num in range(len(black_move_list)):
+			black_move = black_move_list[move_num][0]
+			if "x" in black_move:
+				black_captures += 1
+				white_move = white_move_list[move_num][0]
+				if "x" in white_move:
+					black_capture_loc = re.search("[a-h][1-8]", black_move).group()
+					white_capture_loc = re.search("[a-h][1-8]", white_move).group()
+					if white_capture_loc == black_capture_loc:
+						black_recaptures += 1
+
+	white_capture_percent = white_captures/num_white_moves
+	black_capture_percent = black_captures/num_black_moves
 	white_recapture_percent = white_recaptures/white_captures
 	black_recapture_percent = black_recaptures/black_captures
 
