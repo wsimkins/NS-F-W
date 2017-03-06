@@ -10,14 +10,14 @@ This is the display for the 'menu' form.
 <html>
     <head>
         <title>Chess Heatmaps</title>
-        <link rel="stylesheet" type="text/css" href="{% static "/static/main.css" %}" />
+        <link rel="stylesheet" type="text/css" href="{% static "main.css" %}" />
     </head>
     <body>
         <div id="header">
             <h1>Chess Heatmaps</h1>
         </div>
         <div class="frame">
-            <form method="get">
+            <form action="heatmap" method="post">
                 {% csrf_token %}
                 <table class="form">
                 {{ form }}
@@ -25,63 +25,6 @@ This is the display for the 'menu' form.
                 <input type="submit" value="Submit" />
             </form>
         </div>
-
-        {% if args %}
-        <div class="args">
-            <pre>{{ args }}</pre>
-        </div>
-        {% endif %}
-
-        {% if err %}
-        <div class="error">
-            {{ err|safe }}
-        </div>
-        {% endif %}
-
-
-
-        <div class="frame">
-            {% if result != None %}
-            <div class="results">
-                <table class="courses">
-                    <tr>
-                        {% for col in columns %}
-                        <th>{{ col }}</th>
-                        {% endfor %}
-                    </tr>
-                    {% for entry in result %}
-                    <tr>
-                        {% for col in entry %}
-                        <td>{{ col }}</td>
-                        {% endfor %}
-                    </tr>
-                    {% endfor %}
-                </table>
-            </div>
-            <p class="num_results">Results: {{ num_results }}</p>
-            {% endif %}
-        </div>
+        <a href="compare">Want to compare two heatmaps?</a> 
     </body>
 </html>
-
-
-{% block content %}
-<form action="/menu/" method="post">{% csrf_token %}
-
-    <!-- color -->
-    <div class="fieldWrapper">
-        {{ form.color.errors }}
-        <label for="id_name">Color</label>
-        {{ form.color }}
-    </div>
-    <!-- piece -->
-    <div class="fieldWrapper">
-        {{ form.piece.errors }}
-        <label for="id_name">Piece</label>
-        {{ form.piece }}
-    </div>
-    <button type="submit">
-        <i class="fa fa-thumb-tack"></i> Post
-    </button>
-</form>
-{% endblock %}
