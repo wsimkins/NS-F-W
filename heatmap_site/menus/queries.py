@@ -180,6 +180,7 @@ def time_spent_query(gameids, color, piece):
 		black_moves = b.fetchall()[::2]
 
 		white_dict, black_dict = gda.generate_time_spent_data(white_moves, black_moves)
+		print(white_dict)
 
 		if color == "white":
 			df = np.add(df, white_dict[piece.lower()])
@@ -269,8 +270,6 @@ def compare_heatmaps(df1, df2, num_moves1, num_moves2, title1, title2):
 	sd_diff = math.sqrt(sumsq)
 	SE_diff = sd_diff / 8
 
-
-
 	gs = gridspec.GridSpec(2, 4)
 
 	ax1 = plt.subplot(gs[0, 0:2]) 
@@ -285,11 +284,104 @@ def compare_heatmaps(df1, df2, num_moves1, num_moves2, title1, title2):
 	sns.heatmap(diff_df, annot=False, fmt="f", cmap = "coolwarm", xticklabels = XLABELS, yticklabels = YLABELS)
 	plt.title("Normalized Difference")
 
-
 	sns.plt.savefig("static/heatmap.png")
 	plt.clf()
 
 	return [mean_diff, SE_diff]
+
+
+
+def create_plot_title(input_dict):
+	title = input_dict['color'] + ' ' + input_dict['piece'] + ' ' + input_dict['heatmap_type'] + ' heatmap, '
+	
+	# check if both players names are given and put it into the title
+	if input_dict.get('white_player', None) and input_dict.get('black_player', None):
+		title += input_dict.get('white_player', None) + " as white vs. " + input_dict.get('black_player', None) + "as black, "
+	
+	# check if the player of interest is playing white
+	elif input_dict.get('white_player', None):
+		title += input_dict['white_player']
+		title += " as white, "
+		
+		# Only add one statement about ratings queried
+		# Priority is given to the white_player's rating information
+		if input_dict.get('white_rating_min', None) and input_dict.get('white_rating_max', None):
+			title += "when rated between " + input_dict['white_rating_min'] + " and " + input_dict['white_rating_max']
+		elif input_dict.get('white_rating_min', None):
+			title += "when rated at least " + input_dict.get['white_rating_min']
+		elif input_dict.get('white_rating_max', None):
+			title += "when rated at most " + input_dict['white_rating_max']
+			
+		# Check for opponent's rating
+		elif input_dict.get('black_rating_min', None) and input_dict.get('black_rating_max', None):
+			title += "when against opponents rated between " + input_dict['black_rating_min'] + " and " + input_dict['black_rating_max']
+		elif input_dict.get('black_rating_min', None):
+			title += " when against opponents rated at least " + input_dict['black_rating_min']
+		elif input_dict.get('black_rating_max', None):
+			title += "when against opponents rated at most " + input_dict['black_rating_max']
+			
+	# check if the player of interest is playing black
+	elif input_dict.get('black_player', None):
+		title += input_dict['black_player']
+		title += " as black, "
+		
+		# Only add one statement about ratings queried
+		# Priority is given to the white_player's rating information
+		if input_dict.get('black_rating_min', None) and input_dict.get('black_rating_max', None):
+			title += "when rated between " + input_dict['black_rating_min'] + " and " + input_dict['black_rating_max']
+		elif input_dict.get('black_rating_min', None):
+			title += "when rated at least " + input_dict['black_rating_min']
+		elif input_dict.get('black_rating_max', None):
+			title += "when rated at most " + input_dict['black_rating_max']
+			
+		# Check for opponent's rating
+		elif input_dict.get('white_rating_min', None) and input_dict.get('white_rating_max', None):
+			title += "when against opponents rated between " + input_dict['white_rating_min'] + " and " + input_dict['white_rating_max']
+		elif input_dict.get('white_rating_min', None):
+			title += " when against opponents rated at least " + input_dict['white_rating_min']
+		elif input_dict.get('white_rating_max', None):
+			title += "when against opponents rated at most " + input_dict['white_rating_max']
+			
+		
+	if input_dict.get('year_min', None) and input_dict.get('year_max', None):
+		title += "played between " + input_dict['year_min'] + " and " + input_dict['year_max']
+	
+	if input_dict.get('year_min', None):
+		title += "played after " + input_dict['year_min']
+		
+	if input_dict.get('year_max', None):
+		title += "played before " + input_dict['year_max']
+		
+	opening = ' '
+	if input_dict.get('ECO', None):
+		opening = " Opening code: " + input_dict.get('ECO', '')
+	title += opening
+	
+	if input_dict.get('num_moves_min', None) and input_dict.get('num_moves_max', None):
+		title += "in games lasting between " + input_dict['num_moves_min'] + 'and' + input_dict['num_moves_max'] + " moves."
+	
+	if input_dict.get('num_moves_min', None):
+		title += "in games lasting at least " + input_dict['num_moves_min']
+		
+	if input_dict.get('num_moves_max', None):
+		title += "in games lasting at most " + input_dict['num_moves_max']
+		
+	if input_dict.get('result', None) == '1-0':
+		title += 'White wins'
+		
+	if input_dict.get('result', None) == '0-1':
+		title += 'Black wins'
+	
+	if input_dict.get('result', None) == '1/2-1/2':
+		title += 'games drawn'
+	
+	# Make the title camelcase
+	title = title.title()
+	
+	return title
+	
+
+
 
 
 
