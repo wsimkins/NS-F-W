@@ -1,0 +1,33 @@
+{% comment %}
+
+This is the display for the 'heatmap comparison menu' form.
+
+{% endcomment %}
+
+{% load staticfiles %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Chess Heatmaps</title>
+        <link rel="stylesheet" type="text/css" href="{% static "main.css" %}" />
+    </head>
+    <body>
+        <div id="header">
+            <h1>Chess Heatmaps</h1>
+        </div>
+        <div class="frame">
+            <form action="heatmapcompare" method="post">
+                {% csrf_token %}
+                <h2>Heatmap 1</h2>
+                <table class="form">
+                {{ form1 }}
+                </table>
+                <h2>Heatmap 2</h2>
+                <table class="form">
+                {{ form2 }}
+                </table>
+                <input type="submit" value="Submit" />
+            </form>
+        </div>
+    </body>
+</html>
