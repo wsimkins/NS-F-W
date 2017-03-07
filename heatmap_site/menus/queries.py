@@ -310,7 +310,7 @@ Top_10 = ['carlsen,magnus', 'so,wesley', 'caruana,fabiano', 'vachier lagrave,max
 Before_1886 = ['morphy,paul', 'greco,gioacchino', 'lopez de segura,ruy', 
 	'philidor,fracois andre dani', 'mcdonnell,alexander', 'de labourdonnais,louis charles mahe', 'staunton,howard', 'anderssen,adolf']
 
-def player_list_query(players_list):
+def query_games_by_players(players_list):
 	'''
 	Returns the gameids of the db, based on a list of players
 	'''
