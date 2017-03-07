@@ -4,13 +4,14 @@ import csv
 def generate_lists():
 
 #destination: cp cooklev /heatmap_site/res
-	connection = sqlite3.connect("cooklev")
+	connection = sqlite3.connect("mega_sample.db")
 	c = connection.cursor()
 
 	# gets lists of unique values from sql database
 	player_w = c.execute('''SELECT DISTINCT white_player FROM games''').fetchall()
 	player_b = c.execute('''SELECT DISTINCT black_player FROM games''').fetchall()
 	player = list(set(player_w + player_b))
+	player.sort()
 
 	result = c.execute('''SELECT DISTINCT result FROM games''').fetchall()
 	ECO = c.execute('''SELECT DISTINCT ECO FROM games''').fetchall()
@@ -23,7 +24,7 @@ def generate_lists():
 	f = open('player_list.csv', 'w')
 	w = csv.writer(f, delimiter="|")
 	for row in player:
-		w.writerow([row[0].replace(",", " ")])
+		w.writerow([row[0].replace(",", ". ").title()])
 	f.close
 
 	f = open('result_list.csv', 'w')
