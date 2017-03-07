@@ -1,7 +1,6 @@
-
 {% comment %}
 
-This is the display for the 'menu' form.
+This is the display for the 'heatmap comparison menu' form.
 
 {% endcomment %}
 
@@ -17,14 +16,18 @@ This is the display for the 'menu' form.
             <h1>Chess Heatmaps</h1>
         </div>
         <div class="frame">
-            <form action="{% url 'menus:heatmap_display' %}" method="post">
+            <form action="heatmapcompare" method="post">
                 {% csrf_token %}
+                <h2>Heatmap 1</h2>
                 <table class="form">
-                {{ form }}
+                {{ form1 }}
+                </table>
+                <h2>Heatmap 2</h2>
+                <table class="form">
+                {{ form2 }}
                 </table>
                 <input type="submit" value="Submit" />
             </form>
         </div>
-        <a href="{% url 'menus:heatmap_comp_menu' %}">Want to compare two heatmaps?</a> 
     </body>
 </html>

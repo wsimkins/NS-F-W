@@ -156,6 +156,30 @@ class SearchForm(forms.Form):
     annotation = forms.ChoiceField(label='Display Counts', choices=ANNOTATION, required=True)
     map_type = forms.ChoiceField(label='Heatmap Type', choices=MAP_TYPE, required=True)
 
+class SearchFormCompare(forms.Form):
+    years_c = YearRange(
+                label='Year(s)',
+                help_text='1475-2013',
+                widget=RANGE_WIDGET,
+                required=False)
+    num_move_c = MoveNumberRange(
+                label='Move Numbers',
+                help_text='maximum 300 moves',
+                widget=RANGE_WIDGET,
+                required=False)
+    ratings_c = RatingsRange(
+                label='Player Ratings (Elo)',
+                help_text='maximum 3000',
+                widget=RANGE_WIDGET,
+                required=False)
+    result_c = forms.ChoiceField(label='Result', choices=RESULTS, required=False)
+    ecos_c = forms.ChoiceField(label='ECO (opening)', choices=ECOS, required=False)
+    player_w_c = forms.ChoiceField(label='White Player Name', choices=PLAYERS, required=False)
+    player_b_c = forms.ChoiceField(label='Black Player Name', choices=PLAYERS, required=False)
+    color_c = forms.ChoiceField(label='Color', choices=COLORS, required=True)
+    piece_c = forms.ChoiceField(label='Piece', choices=PIECES, required=True)
+    annotation_c = forms.ChoiceField(label='Display Counts', choices=ANNOTATION, required=True)
+    map_type_c = forms.ChoiceField(label='Heatmap Type', choices=MAP_TYPE, required=True)
 
 
 def home(request):
@@ -174,7 +198,6 @@ def home(request):
 def heatmap_display(request):
     context = {}
     d = request.POST.dict()
-    print(d)
     args = {}
     if d.get("years_0", False):
         args['year_min'] = d["years_0"]
@@ -215,69 +238,95 @@ def heatmap_display(request):
     context['stats'] = queries.generate_heatmap_from_user_input(args)
     return render(request, 'heatmap_display.html', context)
 
+def heatmap_comp_menu(request):
+    context = {}
+    res = None
+    if request.method == 'GET':
+        # create form instances and populate it with data from the request:
+        form1 = SearchForm(request.GET)
+        form2 = SearchFormCompare(request.GET)
+        
+    else:
+        form1 = SearchForm()
+        form2 = SearchFormCompare()
+
+    context['form1'] = form1
+    context['form2'] = form2
+    return render(request, 'heatmap_comp_menu.html', context)
+
+
 def heatmap_display_comp(request):
     context = {}
 
-    # NOT SURE IF THIS IS THE CORRECT WAY, CAN I GENERATE TWO STARTING DICTIONARIES?
-    d1 = request.POST.dict()
-    d2 = request.POST.dict()
+    print(request.POST)
+    print()
 
+    d = request.POST.dict()
+    d_c = request.POST.dict()
 
-    args_1 = {}
+    print(d, "d")
+    print()
+    print(d_c, "d_c")
+    print()
+
+    args = {}
     if d.get("years_0", False):
-        args_1['year_min'] = d["years_0"]
-        args_1['year_max'] = d["years_1"]
+        args['year_min'] = d["years_0"]
+        args['year_max'] = d["years_1"]
     if d.get("num_move_0", False):
-        args_1['num_move_min'] = d["num_move_0"]
-        args_1['num_move_max'] = d["num_move_1"]
+        args['num_move_min'] = d["num_move_0"]
+        args['num_move_max'] = d["num_move_1"]
     if d.get("ratings_0", False):
-        args_1['rating_min'] = d["ratings_0"]
-        args_1['rating_max'] = d["ratings_1"]
+        args['rating_min'] = d["ratings_0"]
+        args['rating_max'] = d["ratings_1"]
     if d.get("ecos", False):
-        args_1['ecos'] = d["ecos"]
+        args['ecos'] = d["ecos"]
     if d.get("result", False):
-        args_1['result'] = d["result"]
+        args['result'] = d["result"]
     if d.get("player_w", False):
-        args_1['white_player'] = d["player_w"]
+        args['white_player'] = d["player_w"]
     if d.get("player_b", False):
-        args_1['black_player'] = d["player_b"]
+        args['black_player'] = d["player_b"]
     if d.get("color", False):
-        args_1['color'] = d["color"]
+        args['color'] = d["color"]
     if d.get("piece", False):
-        args_1['piece'] = d["piece"]
+        args['piece'] = d["piece"]
     if d.get("annotation", False):
-        args_1["annotation"] = d["annotation"]
+        args["annotation"] = d["annotation"]
     if d.get("map_type", False):
-        args_1['heatmap_type'] = d["map_type"]
+        args['heatmap_type'] = d["map_type"]
 
-    args_2 = {}
-    if d.get("years_0", False):
-        args_2['year_min'] = d["years_0"]
-        args_2['year_max'] = d["years_1"]
-    if d.get("num_move_0", False):
-        args_2['num_move_min'] = d["num_move_0"]
-        args_2['num_move_max'] = d["num_move_1"]
-    if d.get("ratings_0", False):
-        args_2['rating_min'] = d["ratings_0"]
-        args_2['rating_max'] = d["ratings_1"]
-    if d.get("ecos", False):
-        args_2['ecos'] = d["ecos"]
-    if d.get("result", False):
-        args_2['result'] = d["result"]
-    if d.get("player_w", False):
-        args_2['white_player'] = d["player_w"]
-    if d.get("player_b", False):
-        args_2['black_player'] = d["player_b"]
-    if d.get("color", False):
-        args_2['color'] = d["color"]
-    if d.get("piece", False):
-        args_2['piece'] = d["piece"]
-    if d.get("annotation", False):
-        args_2["annotation"] = d["annotation"]
-    if d.get("map_type", False):
-        args_2['heatmap_type'] = d["map_type"]
+    args_c = {}
+    if d_c.get("years_c_0", False):
+        args_c['year_min'] = d_c["years_c_0"]
+        args_c['year_max'] = d_c["years_c_1"]
+    if d_c.get("num_move_c_0", False):
+        args_c['num_move_min'] = d_c["num_move_c_0"]
+        args_c['num_move_max'] = d_c["num_move_c_1"]
+    if d_c.get("ratings_c_0", False):
+        args_c['rating_min'] = d_c["ratings_c_0"]
+        args_c['rating_max'] = d_c["ratings_c_1"]
+    if d_c.get("ecos_c", False):
+        args_c['ecos'] = d_c["ecos_c"]
+    if d_c.get("result_c", False):
+        args_c['result'] = d_c["result_c"]
+    if d_c.get("player_w_c", False):
+        args_c['white_player'] = d_c["player_w_c"]
+    if d_c.get("player_b_c", False):
+        args_c['black_player'] = d_c["player_b_c"]
+    if d_c.get("color_c", False):
+        args_c['color'] = d_c["color_c"]
+    if d_c.get("piece_c", False):
+        args_c['piece'] = d_c["piece_c"]
+    if d_c.get("annotation_c", False):
+        args_c["annotation"] = d_c["annotation_c"]
+    if d_c.get("map_type_c", False):
+        args_c['heatmap_type'] = d_c["map_type_c"]
     
-    context['stats'] = queries.generate_comparison_from_user_input([args_1, args_2])
+    print(args, "args")
+    print()
+    print(args_c, "args_c")
+    context['stats'] = queries.generate_comparison_from_user_input([args, args_c])
 
     return render(request, 'heatmap_display_comp.html', context)
 
