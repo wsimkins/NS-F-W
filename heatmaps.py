@@ -265,14 +265,21 @@ files = ['/media/scooklev/USB DISK/NSFW/mega_clean_0_600k.htm',
 		'/media/scooklev/USB DISK/NSFW/mega_clean_1.2_1.8_mil.htm',
 		 '/media/scooklev/USB DISK/NSFW/mega_clean_1.8_2.4_mil.htm', 
 		 '/media/scooklev/USB DISK/NSFW/mega_clean_2.4_3.0_mil.htm', 
-		 '/media/scooklev/USB DISK/NSFW/mega_clean_3.0_3.6_mil.htm',
-		 '/media/scooklev/USB DISK/NSFW/mega_clean_3.6_4.2_mil.htm', 
 		 '/media/scooklev/USB DISK/NSFW/mega_clean_4.2_4.8_mil.htm',
 		 '/media/scooklev/USB DISK/NSFW/mega_clean_4.8_end_mil.htm']
 
+sample = ['/media/scooklev/USB DISK/NSFW/mega_sample.htm']
+
+extra = ['/media/scooklev/USB DISK/NSFW/mega_clean_3.6_4.2_mil.htm', '/media/scooklev/USB DISK/NSFW/mega_clean_3.0_3.6_mil.htm',]
+
+mini = ['/media/scooklev/USB DISK/NSFW/mega_mini.htm']
 
 def generate_db():
-	for html_file in files:
+	for html_file in sample:
 		print('starting step', html_file)
-		create_db(html_file, 'mega.db')
+		create_db(html_file, 'mega_sample.db')
 		print('completed step', html_file)
+
+def generate_mini():
+	for html_file in mini:
+		create_db(html_file, 'mega_mini.db')
