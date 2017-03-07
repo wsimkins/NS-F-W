@@ -286,7 +286,7 @@ def compare_heatmaps(df1, df2, num_moves1, num_moves2, title1, title2):
 	plt.title("Normalized Difference")
 
 
-	sns.plt.savefig("heatmap.png")
+	sns.plt.savefig("static/heatmap.png")
 	plt.clf()
 
 	return [mean_diff, SE_diff]
