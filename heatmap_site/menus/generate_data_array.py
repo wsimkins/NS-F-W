@@ -1,5 +1,5 @@
 #CS122: Group Project - Chess Heatmaps
-#
+# for generating heatmaps
 #Names: Will Simkins, Natalie Gray, Steven Cooklev
 
 
@@ -15,6 +15,7 @@ KNIGHT_DIFFS = [(1, 2), (1, -2), (-1, 2), (-1, -2), (2, 1), (2, -1), (-2, 1), (-
 
 def generate_moved_to_data(move_list, color, piece):
 	heatmap_data = np.zeros((8,8))
+	kingside = 0
 
 	for move_tup in move_list:
 		move = move_tup[0]
@@ -25,7 +26,12 @@ def generate_moved_to_data(move_list, color, piece):
 			destination = destination.group()
 			destination_tuples = [(LETTER_TO_NUM[destination[0]], int(destination[1]))]
 
+		if destination_tuple[1] >= 5:
+			kingside += 1
+
+
 		elif move == "0-0":
+			kingside += 1
 			if piece == "rook":
 				if color == "white":
 					destination_tuples = [(6, 1)]
@@ -62,7 +68,7 @@ def generate_moved_to_data(move_list, color, piece):
 		for destination_tuple in destination_tuples:
 			heatmap_data[tuple(np.subtract(destination_tuple, (1, 1)))] += 1
 
-	return np.rot90(heatmap_data).astype("int")
+	return np.rot90(heatmap_data).astype("int"), kingside
 
 
 
@@ -101,6 +107,9 @@ def generate_time_spent_data(white_move_list, black_move_list):
 		for i in range(len(white_ss)):
 			white_data[piece][8 - white_ss[i][1]][white_ss[i][0] - 1] = 1
 			black_data[piece][8 - black_ss[i][1]][black_ss[i][0] - 1] = 1
+
+	white_aggression = 0
+	black_aggression = 0
 
 	for move_num in range(len(white_move_list)):
 		en_passant = False
@@ -299,6 +308,8 @@ def generate_time_spent_data(white_move_list, black_move_list):
 
 
 		if white_move == "0-0":
+			prev_loc = (0,0)
+			destination_tuple = (0,0)
 			cur_locs["white"]["rook"].remove((8, 1))
 			cur_locs["white"]["rook"].append((6, 1))
 			cur_locs["white"]["king"] = [(7,1)]
@@ -308,6 +319,8 @@ def generate_time_spent_data(white_move_list, black_move_list):
 			cur_board[7][5] = "WR"
 
 		if white_move == "0-0-0":
+			prev_loc = (0,0)
+			destination_tuple = (0,0)
 			cur_locs["white"]["rook"].remove((1, 1))
 			cur_locs["white"]["rook"].append((4, 1))
 			cur_locs["white"]["king"] = [(3,1)]
@@ -325,6 +338,10 @@ def generate_time_spent_data(white_move_list, black_move_list):
 					if loc == destination_tuple:
 						del cur_locs["black"][piece][i]
 						break
+
+
+		if determine_aggression(prev_loc, destination_tuple, "white"):
+			white_aggression += 1
 
 
 		en_passant = False
@@ -519,6 +536,8 @@ def generate_time_spent_data(white_move_list, black_move_list):
 
 
 			if black_move == "0-0":
+				prev_loc = (0,0)
+				destination_tuple = (0, 0)
 				cur_locs["black"]["rook"].remove((8, 8))
 				cur_locs["black"]["rook"].append((6, 8))
 				cur_locs["black"]["king"] = [(7, 8)]
@@ -528,6 +547,8 @@ def generate_time_spent_data(white_move_list, black_move_list):
 				cur_board[0][5] = "BR"
 
 			if black_move == "0-0-0":
+				prev_loc = (0,0)
+				destination_tuple = (0, 0)
 				cur_locs["black"]["rook"].remove((1, 8))
 				cur_locs["black"]["rook"].append((4, 8))
 				cur_locs["black"]["king"] = [(3, 8)]
@@ -544,6 +565,9 @@ def generate_time_spent_data(white_move_list, black_move_list):
 							del cur_locs["white"][piece][i]
 							break
 
+			if determine_aggression(prev_loc, destination_tuple, "black"):
+				black_aggression += 1
+
 		for piece in cur_locs["white"].keys():
 			for loc in cur_locs["white"][piece]:
 				if piece != "all":
@@ -556,7 +580,7 @@ def generate_time_spent_data(white_move_list, black_move_list):
 		white_data[piece] = white_data[piece].astype("int")
 		black_data[piece] = black_data[piece].astype("int")
 
-	return white_data, black_data
+	return white_data, black_data, white_aggression, black_aggression
  
 
 def generate_captures_heatmap(move_list):
@@ -575,7 +599,7 @@ def calculate_trade_statistics(white_move_lists, black_move_lists, num_moves_whi
 	black_captures = 0
 	white_recaptures = 0
 	black_recaptures = 0
-
+	
 	for i in range(len(white_move_lists)):
 		white_move_list = white_move_lists[i]
 		black_move_list = black_move_lists[i]
@@ -602,7 +626,6 @@ def calculate_trade_statistics(white_move_lists, black_move_lists, num_moves_whi
 					if white_capture_loc == black_capture_loc:
 						black_recaptures += 1
 
-
 	white_capture_percent = float(white_captures)/num_moves_white
 	black_capture_percent = float(black_captures)/num_moves_black
 	white_recapture_percent = float(white_recaptures)/white_captures
@@ -615,6 +638,15 @@ def calculate_trade_statistics(white_move_lists, black_move_lists, num_moves_whi
 def convert_tup(tup):
 	return (8 - tup[1], tup[0] - 1)
 
+
+def determine_aggression(prev_loc, destination_tuple, color):
+	if color == "white":
+		if destination_tuple[1] > prev_loc[1]:
+			return True
+	else:
+		if destination_tuple[1] < prev_loc[1]:
+			return True
+	return False
 
 
 
