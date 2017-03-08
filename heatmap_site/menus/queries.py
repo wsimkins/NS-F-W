@@ -392,6 +392,23 @@ def create_plot_title(input_dict, num_games):
 			title += " when against opponents rated at least " + input_dict['white_rating_min'] + " "
 		elif input_dict.get('white_rating_max', None):
 			title += "when against opponents rated at most " + input_dict['white_rating_max'] + " "
+
+	if not input_dict.get("white_player", False):
+		if input_dict.get('white_rating_min', None) and input_dict.get('white_rating_max', None):
+			title += "White rated between " + input_dict['white_rating_min'] + " and " + input_dict['white_rating_max'] + ", "
+		elif input_dict.get('white_rating_min', None):
+			title += "White rated at least " + input_dict.get['white_rating_min'] + ", "
+		elif input_dict.get('white_rating_max', None):
+			title += "White rated at most " + input_dict['white_rating_max'] + ", "
+
+	if not input_dict.get("black_player", False):
+		if input_dict.get('black_rating_min', None) and input_dict.get('black_rating_max', None):
+			title += "Black rated between " + input_dict['black_rating_min'] + " and " + input_dict['black_rating_max'] + ", "
+		elif input_dict.get('black_rating_min', None):
+			title += "Black rated at least " + input_dict['black_rating_min'] + ", "
+		elif input_dict.get('black_rating_max', None):
+			title += "Black rated at most " + input_dict['black_rating_max'] + ", "
+
 			
 		
 	if input_dict.get('year_min', None) and input_dict.get('year_max', None):
