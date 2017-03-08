@@ -14,7 +14,7 @@ import os
 import generate_data_array as gda
 
 
-DATABASE_FILENAME = '/home/nataliegray/NS-F-W/heatmap_site/menus/mega_sample.db'
+DATABASE_FILENAME = 'mega_sample.db'
 PIECE_TO_LETTER = {"Queen":"Q", "Rook":"R", "Knight":"N", "King":"K", "Bishop":"B"}
 XLABELS = ["a", "b", "c", "d", "e", "f", "g", "h"]
 YLABELS = ["8", "7", "6", "5", "4", "3", "2", "1"]
@@ -73,6 +73,8 @@ def games_query(input_dict):
 	for key in keys:
 		if key == "color" or key == "piece" or key == "heatmap_type" or key == "annotation":
 			continue
+		elif key == "ECO":
+			games_query += "substr(ECO, 1, 1) = ? AND "
 		elif "max" in key:
 			games_query += key[:-4] + " <= ? AND "
 		elif "min" in key:
@@ -116,7 +118,8 @@ def generate_comparison_from_user_input(input_list):
 	if heatmap_type1 == "moved to":
 		df1, num_moves1 = moved_to_query(gameids1, input_dict1["color"], input_dict1["piece"])
 	elif heatmap_type1 == "time spent":
-		df1, num_moves1 = time_spent_query(gameids1, input_dict1["color"], input_dict1["piece"])
+		df1, num_moves1, ai = time_spent_query(gameids1, input_dict1["color"], input_dict1["piece"])
+		stats1 = "Percent of forward moves: " + str(round(100*ai, 2))
 	elif heatmap_type1 == "captures":
 		cp, rp, df1, num_moves1 = captures_query(gameids1, input_dict1["color"], input_dict1["piece"])
 		stats1 = "Percent of moves which are captures: " + str(round(100*cp, 2))  
@@ -189,6 +192,7 @@ def time_spent_query(gameids, color, piece):
 
 	df = np.zeros((8, 8))
 	num_moves = 0
+	aggression = 0
 
 	print(len(gameids))
 	for gameid in gameids:
@@ -201,16 +205,19 @@ def time_spent_query(gameids, color, piece):
 		b = c.execute("SELECT move FROM moves WHERE gameid = ? AND color = ? ORDER BY move_num;", (gameid, "black"))
 		black_moves = b.fetchall()
 
-		white_dict, black_dict = gda.generate_time_spent_data(white_moves, black_moves)
+		white_dict, black_dict, white_aggression, black_aggression = gda.generate_time_spent_data(white_moves, black_moves)
 
 		if color == "white":
 			df = np.add(df, white_dict[piece.lower()])
 			num_moves += len(white_moves)
+			agression += white_aggression
 		else:
 			df = np.add(df, black_dict[piece.lower()])
 			num_moves += len(black_moves)
+			agression += black_aggression
      
-	return df, num_moves
+    ai = float(aggression) / num_moves
+	return df, num_moves, ai
        
 
 def captures_query(gameids, color, piece):
