@@ -575,8 +575,6 @@ def calculate_trade_statistics(white_move_lists, black_move_lists, num_moves_whi
 	black_captures = 0
 	white_recaptures = 0
 	black_recaptures = 0
-	num_white_moves = 0
-	num_black_moves = 0
 
 	for i in range(len(white_move_lists)):
 		white_move_list = white_move_lists[i]
@@ -604,10 +602,11 @@ def calculate_trade_statistics(white_move_lists, black_move_lists, num_moves_whi
 					if white_capture_loc == black_capture_loc:
 						black_recaptures += 1
 
-	white_capture_percent = white_captures/num_white_moves
-	black_capture_percent = black_captures/num_black_moves
-	white_recapture_percent = white_recaptures/white_captures
-	black_recapture_percent = black_recaptures/black_captures
+
+	white_capture_percent = float(white_captures)/num_moves_white
+	black_capture_percent = float(black_captures)/num_moves_black
+	white_recapture_percent = float(white_recaptures)/white_captures
+	black_recapture_percent = float(black_recaptures)/black_captures
 
 	return white_capture_percent, black_capture_percent, white_recapture_percent, black_recapture_percent
 

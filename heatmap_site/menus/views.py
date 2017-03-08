@@ -49,7 +49,7 @@ def _load_column(filename, col=0):
     """
     with open(filename) as f:
         col = list(zip(*csv.reader(f)))[0]
-        return list(col)
+        return [player.replace(".", ",") for player in list(col)]
 
 def _load_res_column(filename, col=0):
     """
@@ -235,7 +235,9 @@ def heatmap_display(request):
     if d.get("map_type", False):
         args['heatmap_type'] = d["map_type"]
 
-    context['stats'] = queries.generate_heatmap_from_user_input(args)
+    a, b = queries.generate_heatmap_from_user_input(args)
+    context["stats1"] = a
+    context["stats2"] = b
     return render(request, 'heatmap_display.html', context)
 
 def heatmap_comp_menu(request):
@@ -323,10 +325,13 @@ def heatmap_display_comp(request):
     if d_c.get("map_type_c", False):
         args_c['heatmap_type'] = d_c["map_type_c"]
     
-    print(args, "args")
-    print()
-    print(args_c, "args_c")
-    context['stats'] = queries.generate_comparison_from_user_input([args, args_c])
+    a,b,c,d,e,f = queries.generate_comparison_from_user_input([args, args_c])
+    context["stats1"] = a
+    context["stats2"] = b
+    context["stats3"] = c
+    context["stats4"] = d
+    context["stats5"] = e
+    context["stats6"] = f
 
     return render(request, 'heatmap_display_comp.html', context)
 
