@@ -27,6 +27,40 @@ result, ECO, year_min, year_max, num_moves_min, num_moves_max, piece, heatmap_ty
 '''
 
 
+World_Champs = ['steinitz,william', 'lasker,emanuel', 'capablanca,jose raul', 'alekhine,alexander',
+				'euwe,max', 'botvinnik,mikhail', 'smyslov,vassily', 'tal,mihail', 'petrosian,tigran',
+				'spassky,boris', 'fischer, robert james', 'karpov,anatoly', 'kasparov,garry', 
+				'kramnik,vladimir', 'anand,viswanathan', 'carlsen,magnus']
+Female = ['polgar,judit', 'polgar,susan', 'yifan,hou', 'stefanova,antoaneta', 'koneru,humpy', 
+			'yifan,hou', 'krush,irina', 'kosteniuk,alexandra']
+Positional = ['ivanchuk,vassily', 'capablanca,jose raul', 'seirawan,yasser', 'karpov,anatoly', 'nimzowitsch,aaron']
+Tactical = ['tal,mihail', 'shirov,alexei', 'topalov,veselin', 'christiansen,larry mark', 'kasparov,garry', 'velimirovic,dragoljub']
+Creative = ['ivanchuk,vassily', 'jobava,baadur']
+Soviet = ['kotov,alexander', 'gulko,boris', 'beliavsky,alexander', 'geller,efim', 'bronstein,david', 'korchnoi,viktor']
+English = ['short,nigel', 'jones,gawain', 'adams,michael', 'nunn,john', 'davies,nigel']
+Chinese = ['yifan,hou', 'yue,wang', 'hao,wang', 'jun,xie', 'liren,ding', 'yangyi,yu']
+
+Top_10 = ['carlsen,magnus', 'so,wesley', 'caruana,fabiano', 'vachier lagrave,maxime', 'nakamura,hikaru', 'anand,viswanathan', 'karjakin,sergey', 
+'aronian,levon', 'giri,anish']
+
+Before_1886 = ['morphy,paul', 'greco,gioacchino', 'lopez de segura,ruy', 
+	'philidor,fracois andre dani', 'mcdonnell,alexander', 'de labourdonnais,louis charles mahe', 'staunton,howard', 'anderssen,adolf']
+
+def query_games_by_players(players_list):
+	'''
+	Returns the gameids of the db, based on a list of players
+	'''
+
+	conn = sql.connect(DATABASE_FILENAME)
+	c = conn.cursor()
+	games_query = "SELECT gameid FROM games WHERE games.white_player IN ? OR games.black_player IN ?;"
+	r = c.execute(games_query, players_list)
+	gameids = r.fetchall()
+	return gameids
+
+world_champ_ids = query_games_by_players(World_Champs)
+female_ids 
+
 def generate_heatmap_from_user_input(input_dict):
 	gameids = games_query(input_dict)
 
@@ -291,37 +325,7 @@ def compare_heatmaps(df1, df2, num_moves1, num_moves2, title1, title2):
 	return [mean_diff, SE_diff]
 
 
-World_Champs = ['steinitz,william', 'lasker,emanuel', 'capablanca,jose raul', 'alekhine,alexander',
-				'euwe,max', 'botvinnik,mikhail', 'smyslov,vassily', 'tal,mihail', 'petrosian,tigran',
-				'spassky,boris', 'fischer, robert james', 'karpov,anatoly', 'kasparov,garry', 
-				'kramnik,vladimir', 'anand,viswanathan', 'carlsen,magnus']
-Female = ['polgar,judit', 'polgar,susan', 'yifan,hou', 'stefanova,antoaneta', 'koneru,humpy', 
-			'yifan,hou', 'krush,irina', 'kosteniuk,alexandra']
-Positional = ['ivanchuk,vassily', 'capablanca,jose raul', 'seirawan,yasser', 'karpov,anatoly', 'nimzowitsch,aaron']
-Tactical = ['tal,mihail', 'shirov,alexei', 'topalov,veselin', 'christiansen,larry mark', 'kasparov,garry', 'velimirovic,dragoljub']
-Creative = ['ivanchuk,vassily', 'jobava,baadur']
-Soviet = ['kotov,alexander', 'gulko,boris', 'beliavsky,alexander', 'geller,efim', 'bronstein,david', 'korchnoi,viktor']
-English = ['short,nigel', 'jones,gawain', 'adams,michael', 'nunn,john', 'davies,nigel']
-Chinese = ['yifan,hou', 'yue,wang', 'hao,wang', 'jun,xie', 'liren,ding', 'yangyi,yu']
 
-Top_10 = ['carlsen,magnus', 'so,wesley', 'caruana,fabiano', 'vachier lagrave,maxime', 'nakamura,hikaru', 'anand,viswanathan', 'karjakin,sergey', 
-'aronian,levon', 'giri,anish']
-
-Before_1886 = ['morphy,paul', 'greco,gioacchino', 'lopez de segura,ruy', 
-	'philidor,fracois andre dani', 'mcdonnell,alexander', 'de labourdonnais,louis charles mahe', 'staunton,howard', 'anderssen,adolf']
-
-def query_games_by_players(players_list):
-	'''
-	Returns the gameids of the db, based on a list of players
-	'''
-
-	conn = sql.connect(DATABASE_FILENAME)
-	c = conn.cursor()
-	games_query = "SELECT gameid FROM games WHERE games.white_player IN ? OR games.black_player IN ?;"
-	r = c.execute(games_query, players_list)
-	gameids = r.fetchall()
-	return gameids
- 
 
 def create_plot_title(input_dict):
 	title = input_dict['color'] + ' ' + input_dict['piece'] + ' ' + input_dict['heatmap_type'] + ' heatmap, '
