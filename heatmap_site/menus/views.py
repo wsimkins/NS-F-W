@@ -65,15 +65,7 @@ def _build_dropdown(options):
 
 PLAYERS = _build_dropdown([None] + _load_res_column('player_list.csv'))
 RESULTS = _build_dropdown([None] + _load_res_column('result_list.csv'))
-
-eco_list = []
-for let in ["A", "B", "C", "D", "E"]:
-    for num in range(100):
-        if num < 10:
-            num = "0" + str(num)
-        eco_list.append(let + str(num))
-
-ECOS = _build_dropdown([None] + eco_list)
+ECOS = _build_dropdown([None] + ["A00-A39", "A40-A99", "B00-B19", "B20-B99", "C00-C19", "C20-C99", "D00-D69", "D70-E99"])
 YEARS = _build_dropdown([None] + _load_res_column('year_list.csv'))
 NUM_MOVES = _build_dropdown([None] + _load_res_column('num_move_list.csv'))
 PIECES = _build_dropdown([None] + ["King", "Queen", "Rook", "Knight", "Bishop", "Pawn", "All"])
@@ -142,8 +134,13 @@ class SearchForm(forms.Form):
                 help_text='maximum 300 moves',
                 widget=RANGE_WIDGET,
                 required=False)
-    ratings = RatingsRange(
-                label='Player Ratings (Elo)',
+    ratings_b = RatingsRange(
+                label='Black Player Rating (Elo)',
+                help_text='maximum 3000',
+                widget=RANGE_WIDGET,
+                required=False)
+    ratings_w = RatingsRange(
+                label='White Player Rating (Elo)',
                 help_text='maximum 3000',
                 widget=RANGE_WIDGET,
                 required=False)
@@ -167,13 +164,18 @@ class SearchFormCompare(forms.Form):
                 help_text='maximum 300 moves',
                 widget=RANGE_WIDGET,
                 required=False)
-    ratings_c = RatingsRange(
-                label='Player Ratings (Elo)',
+    ratings_b_c = RatingsRange(
+                label='Black Player Rating (Elo)',
+                help_text='maximum 3000',
+                widget=RANGE_WIDGET,
+                required=False)
+    ratings_w_c = RatingsRange(
+                label='White Player Rating (Elo)',
                 help_text='maximum 3000',
                 widget=RANGE_WIDGET,
                 required=False)
     result_c = forms.ChoiceField(label='Result', choices=RESULTS, required=False)
-    ecos_c = forms.ChoiceField(label='ECO (opening)', choices=ECOS, required=False)
+    ecos_c = forms.ChoiceField(label='Opening Category', choices=ECOS, required=False)
     player_w_c = forms.ChoiceField(label='White Player Name', choices=PLAYERS, required=False)
     player_b_c = forms.ChoiceField(label='Black Player Name', choices=PLAYERS, required=False)
     color_c = forms.ChoiceField(label='Color', choices=COLORS, required=True)
@@ -202,42 +204,37 @@ def heatmap_display(request):
     if d.get("years_0", False):
         args['year_min'] = d["years_0"]
         args['year_max'] = d["years_1"]
-
     if d.get("num_move_0", False):
         args['num_move_min'] = d["num_move_0"]
         args['num_move_max'] = d["num_move_1"]
-
-    if d.get("ratings_0", False):
-        args['rating_min'] = d["ratings_0"]
-        args['rating_max'] = d["ratings_1"]
-
+    if d.get("ratings_w_0", False):
+        args['white_rating_min'] = d["ratings_w_0"]
+        args['white_rating_max'] = d["ratings_w_1"]
+    if d.get("ratings_b_0", False):
+        args['black_rating_min'] = d["ratings_b_0"]
+        args['black_rating_max'] = d["ratings_b_1"]
     if d.get("ecos", False):
-        args['ecos'] = d["ecos"]
-
+        args['ECO'] = d["ecos"]
     if d.get("result", False):
         args['result'] = d["result"]
-
     if d.get("player_w", False):
         args['white_player'] = d["player_w"]
-
     if d.get("player_b", False):
         args['black_player'] = d["player_b"]
-
     if d.get("color", False):
         args['color'] = d["color"]
-
     if d.get("piece", False):
         args['piece'] = d["piece"]
-
     if d.get("annotation", False):
         args["annotation"] = d["annotation"]
-
     if d.get("map_type", False):
         args['heatmap_type'] = d["map_type"]
 
     a, b = queries.generate_heatmap_from_user_input(args)
     context["stats1"] = a
     context["stats2"] = b
+    if not a:
+        return render(request, '404.html')
     return render(request, 'heatmap_display.html', context)
 
 def heatmap_comp_menu(request):
@@ -278,11 +275,14 @@ def heatmap_display_comp(request):
     if d.get("num_move_0", False):
         args['num_move_min'] = d["num_move_0"]
         args['num_move_max'] = d["num_move_1"]
-    if d.get("ratings_0", False):
-        args['rating_min'] = d["ratings_0"]
-        args['rating_max'] = d["ratings_1"]
+    if d.get("ratings_w_0", False):
+        args['white_rating_min'] = d["ratings_w_0"]
+        args['white_rating_max'] = d["ratings_w_1"]
+    if d.get("ratings_b_0", False):
+        args['black_rating_min'] = d["ratings_b_0"]
+        args['black_rating_max'] = d["ratings_b_1"]
     if d.get("ecos", False):
-        args['ecos'] = d["ecos"]
+        args['ECO'] = d["ecos"]
     if d.get("result", False):
         args['result'] = d["result"]
     if d.get("player_w", False):
@@ -305,11 +305,14 @@ def heatmap_display_comp(request):
     if d_c.get("num_move_c_0", False):
         args_c['num_move_min'] = d_c["num_move_c_0"]
         args_c['num_move_max'] = d_c["num_move_c_1"]
-    if d_c.get("ratings_c_0", False):
-        args_c['rating_min'] = d_c["ratings_c_0"]
-        args_c['rating_max'] = d_c["ratings_c_1"]
+    if d.get("ratings_w_c_0", False):
+        args_c['white_rating_min'] = d_c["ratings_w_c_0"]
+        args_c['white_rating_max'] = d_c["ratings_w_c_1"]
+    if d.get("ratings_b_c_0", False):
+        args_c['black_rating_min'] = d_c["ratings_b_c_0"]
+        args_c['black_rating_max'] = d_c["ratings_b_c_1"]
     if d_c.get("ecos_c", False):
-        args_c['ecos'] = d_c["ecos_c"]
+        args_c['ECO'] = d_c["ecos_c"]
     if d_c.get("result_c", False):
         args_c['result'] = d_c["result_c"]
     if d_c.get("player_w_c", False):
@@ -326,6 +329,14 @@ def heatmap_display_comp(request):
         args_c['heatmap_type'] = d_c["map_type_c"]
     
     a,b,c,d,e,f = queries.generate_comparison_from_user_input([args, args_c])
+
+    print(a,b,c,d,e,f)
+
+    if not a:
+        return render(request, '405.html')
+    if not b:
+        return render(request, '406.html')
+
     context["stats1"] = a
     context["stats2"] = b
     context["stats3"] = c

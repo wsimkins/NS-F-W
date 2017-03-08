@@ -4,7 +4,7 @@ import csv
 def generate_lists():
 
 #destination: cp cooklev /heatmap_site/res
-	connection = sqlite3.connect("mega_sample.db")
+	connection = sqlite3.connect("mini.db")
 	c = connection.cursor()
 
 	# gets lists of unique values from sql database

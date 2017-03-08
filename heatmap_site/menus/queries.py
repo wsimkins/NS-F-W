@@ -14,73 +14,37 @@ import os
 import generate_data_array as gda
 
 
-DATABASE_FILENAME = 'mega_sample.db'
+DATABASE_FILENAME = 'menus/mini.db'
 PIECE_TO_LETTER = {"Queen":"Q", "Rook":"R", "Knight":"N", "King":"K", "Bishop":"B"}
 XLABELS = ["a", "b", "c", "d", "e", "f", "g", "h"]
 YLABELS = ["8", "7", "6", "5", "4", "3", "2", "1"]
 
-'''
-color, white_player, black_player, white_rating_min, white_rating_max, black_rating_min, black_rating_max,
-result, ECO, year_min, year_max, num_moves_min, num_moves_max, piece, heatmap_type, compare
-'''
-
-
-World_Champs = ['steinitz,william', 'lasker,emanuel', 'capablanca,jose raul', 'alekhine,alexander',
-				'euwe,max', 'botvinnik,mikhail', 'smyslov,vassily', 'tal,mihail', 'petrosian,tigran',
-				'spassky,boris', 'fischer, robert james', 'karpov,anatoly', 'kasparov,garry', 
-				'kramnik,vladimir', 'anand,viswanathan', 'carlsen,magnus']
-Female = ['polgar,judit', 'polgar,susan', 'yifan,hou', 'stefanova,antoaneta', 'koneru,humpy', 
-			'yifan,hou', 'krush,irina', 'kosteniuk,alexandra']
-Positional = ['ivanchuk,vassily', 'capablanca,jose raul', 'seirawan,yasser', 'karpov,anatoly', 'nimzowitsch,aaron']
-Tactical = ['tal,mihail', 'shirov,alexei', 'topalov,veselin', 'christiansen,larry mark', 'kasparov,garry', 'velimirovic,dragoljub']
-Creative = ['ivanchuk,vassily', 'jobava,baadur']
-Soviet = ['kotov,alexander', 'gulko,boris', 'beliavsky,alexander', 'geller,efim', 'bronstein,david', 'korchnoi,viktor']
-English = ['short,nigel', 'jones,gawain', 'adams,michael', 'nunn,john', 'davies,nigel']
-Chinese = ['yifan,hou', 'yue,wang', 'hao,wang', 'jun,xie', 'liren,ding', 'yangyi,yu']
-
-Top_10 = ['carlsen,magnus', 'so,wesley', 'caruana,fabiano', 'vachier lagrave,maxime', 'nakamura,hikaru', 'anand,viswanathan', 'karjakin,sergey', 
-'aronian,levon', 'giri,anish']
-
-Before_1886 = ['morphy,paul', 'greco,gioacchino', 'lopez de segura,ruy', 
-	'philidor,fracois andre dani', 'mcdonnell,alexander', 'de labourdonnais,louis charles mahe', 'staunton,howard', 'anderssen,adolf']
-
-def query_games_by_players(players_list):
-	'''
-	Returns the gameids of the db, based on a list of players
-	'''
-
-	conn = sql.connect(DATABASE_FILENAME)
-	c = conn.cursor()
-	games_query = "SELECT gameid FROM games WHERE games.white_player IN ? OR games.black_player IN ?;"
-	r = c.execute(games_query, players_list)
-	gameids = r.fetchall()
-	return gameids
-
-world_champ_ids = query_games_by_players(World_Champs)
-female_ids 
-
 def generate_heatmap_from_user_input(input_dict):
 	gameids = games_query(input_dict)
+	if gameids == []:
+		return False, False
 
 	heatmap_type = input_dict["heatmap_type"]
 
-	annot = True
-	if input_dict.get("annotation", None) == "no":
-		annot = False
-
-	stats1 = ""
-	stats2 = ""
+	stats1 = " "
+	stats2 = " "
 
 	if heatmap_type == "moved to":
-		df, num_moves = moved_to_query(gameids, input_dict["color"], input_dict["piece"])
+		df, num_moves, ksp = moved_to_query(gameids, input_dict["color"], input_dict["piece"])
+		stats1 = "Percent of " + input_dict["piece"] + " moves to kingside: " + str(round(100*ksp, 2))
 	elif heatmap_type == "time spent":
-		df, num_moves = time_spent_query(gameids, input_dict["color"], input_dict["piece"])
+		df, num_moves, ai = time_spent_query(gameids, input_dict["color"], input_dict["piece"])
+		stats1 = "Percent moves foward: " + str(round(100*ai, 2))
 	elif heatmap_type == "captures":
 		cp, rp, df, num_moves = captures_query(gameids, input_dict["color"], input_dict["piece"])
 		stats1 = "Percent of moves which are captures: " + str(round(100*cp, 2))  
 		stats2 = "Percent of moves which are recaptures: " + str(round(100*rp, 2))
 
-	title = create_plot_title(input_dict)
+	annot = False
+	if input_dict["annotation"] == "yes":
+		annot = True
+
+	title = create_plot_title(input_dict, len(gameids))
 
 	df = df.astype("int")
 
@@ -108,7 +72,9 @@ def games_query(input_dict):
 		if key == "color" or key == "piece" or key == "heatmap_type" or key == "annotation":
 			continue
 		elif key == "ECO":
-			games_query += "substr(ECO, 1, 1) = ? AND "
+			games_query += "substr(ECO, 1, 1) = ? AND CAST(substr(ECO, 2, 2) as int) >= ? AND CAST(substr(ECO, 6, 2) as int) <= ? AND "
+			args += [input_dict[key][0], int(input_dict[key][1:3]), int(input_dict[key][5:])]
+			continue
 		elif "max" in key:
 			games_query += key[:-4] + " <= ? AND "
 		elif "min" in key:
@@ -137,45 +103,61 @@ def generate_comparison_from_user_input(input_list):
 	input_dict1 = input_list[0]
 	input_dict2 = input_list[1]
 	gameids1 = games_query(input_dict1)
+
+	if not gameids1:
+		return False, True, False, False, False, False
+
 	gameids2 = games_query(input_dict2)
 
-	title1 = create_plot_title(input_dict1)
-	title2 = create_plot_title(input_dict2)
+	if not gameids2:
+		return True, False, False, False, False, False
+
+	title1 = create_plot_title(input_dict1, len(gameids1))
+	title2 = create_plot_title(input_dict2, len(gameids2))
 
 	heatmap_type1 = input_dict1["heatmap_type"]
 
-	stats1 = ""
-	stats2 = ""
-	stats3 = ""
-	stats4 = ""
+	stats1 = " "
+	stats2 = " "
+	stats3 = " "
+	stats4 = " "
 
 	if heatmap_type1 == "moved to":
-		df1, num_moves1 = moved_to_query(gameids1, input_dict1["color"], input_dict1["piece"])
+		df1, num_moves1, ksp = moved_to_query(gameids1, input_dict1["color"], input_dict1["piece"])
+		stats1 = "Heatmap 1: Percent of " + input_dict1["piece"] + " moves to kingside: " + str(round(100*ksp, 2))
 	elif heatmap_type1 == "time spent":
 		df1, num_moves1, ai = time_spent_query(gameids1, input_dict1["color"], input_dict1["piece"])
-		stats1 = "Percent of forward moves: " + str(round(100*ai, 2))
+		stats1 = "Heatmap 1: Percent of forward moves: " + str(round(100*ai, 2))
 	elif heatmap_type1 == "captures":
 		cp, rp, df1, num_moves1 = captures_query(gameids1, input_dict1["color"], input_dict1["piece"])
-		stats1 = "Percent of moves which are captures: " + str(round(100*cp, 2))  
-		stats2 = "Percent of moves which are recaptures: " + str(round(100*rp, 2))
+		stats1 = "Heatmap 1: Percent of moves which are captures: " + str(round(100*cp, 2))  
+		stats2 = "Heatmap 1: Percent of moves which are recaptures: " + str(round(100*rp, 2))
 
 	heatmap_type2 = input_dict2["heatmap_type"]
 
-	stats2 = []
-
 	if heatmap_type2 == "moved to":
-		df2, num_moves2 = moved_to_query(gameids2, input_dict2["color"], input_dict2["piece"])
+		df2, num_moves2, ksp = moved_to_query(gameids2, input_dict2["color"], input_dict2["piece"])
+		stats3 = "Heatmap 2: Percent of " + input_dict2["piece"] + " moves to kingside: " + str(round(100*ksp, 2))
 	elif heatmap_type1 == "time spent":
-		df2, num_moves2 = time_spent_query(gameids2, input_dict2["color"], input_dict2["piece"])
+		df2, num_moves2, ai = time_spent_query(gameids2, input_dict2["color"], input_dict2["piece"])
+		stats2 = "Heatmap 2: Percent of forward moves: " + str(round(100*ai, 2))
 	elif heatmap_type2 == "captures":
 		cp, rp, df2, num_moves2 = captures_query(gameids2, input_dict2["color"], input_dict2["piece"])
-		stats3 = "Percent of moves which are captures: " + str(round(100*cp, 2))  
-		stats4 = "Percent of moves which are recaptures: " + str(round(100*rp, 2))
+		stats3 = "Heatmap 2: Percent of moves which are captures: " + str(round(100*cp, 2))  
+		stats4 = "Heatmap 2: Percent of moves which are recaptures: " + str(round(100*rp, 2))
 
+	annot1 = False
+	if input_dict1["annotation"] == "yes":
+		annot1 = True
 
-	compare_stats = compare_heatmaps(df1, df2, num_moves1, num_moves2, title1, title2)
+	annot2 = False
+	if input_dict2["annotation"] == "yes":
+		annot2 = True
 
-	stats5 = "Mean Magnitude of Normalized Differences: " + compare_stats[0]
+	compare_stats = compare_heatmaps(df1, df2, num_moves1, num_moves2, title1, title2, annot1, annot2)
+
+	stats5 = "Mean Magnitude of Normalized Differences: " + str(compare_stats[0])
+	stats6 = "Standard Error of Magnitude of Normalized Differences: " + str(compare_stats[1])
 
 	return stats1, stats2, stats3, stats4, stats5, stats6
 
@@ -202,21 +184,22 @@ def moved_to_query(gameids, color, piece):
 	else: 
 		moves_query = "SELECT move FROM moves WHERE color = ?"
 	moves_query += " AND gameid = ? ORDER BY move_num;"
-	print(moves_query)
 
-	df = np.zeros((8, 8))
 	num_moves = 0
 
+	move_list = []
+
 	for gameid in gameids:
-		print(gameid)
 		gameid = gameid[0]
 
 		r = c.execute(moves_query, args + [gameid])
 		moves = r.fetchall()
 		num_moves += len(moves)
-		df = np.add(df, gda.generate_moved_to_data(moves, color, piece))
+		move_list += moves
+
+	df, kingside = gda.generate_moved_to_data(move_list, color, piece)
      
-	return df, num_moves
+	return df, num_moves, float(kingside) / num_moves
 
 
 def time_spent_query(gameids, color, piece):
@@ -227,9 +210,7 @@ def time_spent_query(gameids, color, piece):
 	num_moves = 0
 	aggression = 0
 
-	print(len(gameids))
 	for gameid in gameids:
-		print(gameid)
 		gameid = gameid[0]
 
 		w = c.execute("SELECT move FROM moves WHERE gameid = ? AND color = ? ORDER BY move_num;", (gameid, "white"))
@@ -241,17 +222,24 @@ def time_spent_query(gameids, color, piece):
 		white_dict, black_dict, white_aggression, black_aggression = gda.generate_time_spent_data(white_moves, black_moves)
 
 		if color == "white":
-			df = np.add(df, white_dict[piece.lower()])
+			if piece == "All":
+				for key in white_dict:
+					df = np.add(df, white_dict[key])
+			else:
+				df = np.add(df, white_dict[piece.lower()])
 			num_moves += len(white_moves)
-			agression += white_aggression
+			aggression += white_aggression
 		else:
-			df = np.add(df, black_dict[piece.lower()])
+			if piece == "All":
+				for key in black_dict:
+					df = np.add(df, black_dict[key])
+			else:
+				df = np.add(df, black_dict[piece.lower()])
 			num_moves += len(black_moves)
-			agression += black_aggression
-     
-    ai = float(aggression) / num_moves
+			aggression += black_aggression
+	ai = float(aggression) / num_moves
 	return df, num_moves, ai
-       
+
 
 def captures_query(gameids, color, piece):
 	conn = sql.connect(DATABASE_FILENAME)
@@ -311,7 +299,10 @@ def captures_query(gameids, color, piece):
 
 
 
-def compare_heatmaps(df1, df2, num_moves1, num_moves2, title1, title2):
+def compare_heatmaps(df1, df2, num_moves1, num_moves2, title1, title2, annot1, annot2):
+	df1 = df1.astype("float")
+	df2 = df2.astype("float")
+
 	diff_df = (df1 / num_moves1) - (df2 / num_moves2)
 
 	abs_diff = abs(diff_df)
@@ -328,24 +319,22 @@ def compare_heatmaps(df1, df2, num_moves1, num_moves2, title1, title2):
 	sd_diff = math.sqrt(sumsq)
 	SE_diff = sd_diff / 8
 
-	plt.figure(figsize=(20, 10))
-
-	gs = gridspec.GridSpec(2, 4)
-
-	ax1 = plt.subplot(gs[0, 0:2]) 
-	sns.heatmap(df1, annot=False, fmt="d", cmap = "Reds", xticklabels = XLABELS, yticklabels = YLABELS, square=True)
+	plt.figure(1)
+	sns.heatmap(df1, annot=annot1, fmt="d", cmap = "Reds", xticklabels = XLABELS, yticklabels = YLABELS, square=True)
 	plt.title(title1)
+	sns.plt.savefig("static/heatmap1.png")
+	sns.plt.clf()
 
-	ax2 = plt.subplot(gs[0,2:])
-	sns.heatmap(df2, annot=False, fmt="d", cmap = "Reds", xticklabels = XLABELS, yticklabels = YLABELS, square=True)
+	plt.figure(2)
+	sns.heatmap(df2, annot=annot2, fmt="d", cmap = "Reds", xticklabels = XLABELS, yticklabels = YLABELS, square=True)
 	plt.title(title2)
+	sns.plt.savefig("static/heatmap2.png")
+	sns.plt.clf()
 
-	ax3 = plt.subplot(gs[1,1:3])
+	plt.figure(3)
 	sns.heatmap(diff_df, annot=False, fmt="f", cmap = "coolwarm", xticklabels = XLABELS, yticklabels = YLABELS, square=True)
 	plt.title("Normalized Difference")
-
-
-	sns.plt.savefig("static/heatmap.png")
+	sns.plt.savefig("static/heatmapc.png")
 	plt.clf()
 
 	return [mean_diff, SE_diff]
@@ -353,7 +342,7 @@ def compare_heatmaps(df1, df2, num_moves1, num_moves2, title1, title2):
 
 
 
-def create_plot_title(input_dict):
+def create_plot_title(input_dict, num_games):
 	title = input_dict['color'] + ' ' + input_dict['piece'] + ' ' + input_dict['heatmap_type'] + ' heatmap, '
 	
 	# check if both players names are given and put it into the title
@@ -437,8 +426,9 @@ def create_plot_title(input_dict):
 	if input_dict.get('result', None) == '1/2-1/2':
 		title += 'games drawn'
 	
+	title += " [" + str(num_games) + " Games]"
 	# Make the title camelcase
 	title = title.title()
-	
+	title = title.replace("  ", " ")
 	return title
 	

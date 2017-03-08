@@ -1,8 +1,19 @@
 {% load static %}
-<img src="{% static "heatmap.png" %}" alt="oops" />
-<p>{{ stats1 }}</p> 
-<p>{{ stats2 }}</p>
-<p>{{ stats3 }}</p> 
-<p>{{ stats4 }}</p>
-<p>{{ stats5 }}</p> 
-<p>{{ stats6 }}</p>
+<div style="text-align:center">
+	<div style="display: inline-block; margin-bottom: 2em; margin-right: 2em; width: NN;">
+		<img src="{% static "heatmap1.png" %}" alt="oops" />
+	</div>
+	<div style="display: inline-block; margin-bottom: 2em; margin-right: 2em; width: NN;">
+	    <img src="{% static "heatmap2.png" %}" alt="oops"/>
+	</div>
+
+
+
+	<img src="{% static "heatmapc.png" %}" alt="oops" />
+	<p>{{ stats1 }}</p> 
+	<p>{{ stats2 }}</p>
+	<p>{{ stats3 }}</p> 
+	<p>{{ stats4 }}</p>
+	<p>{{ stats5 }}</p> 
+	<p>{{ stats6 }}</p>
+</div>

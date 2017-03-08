@@ -1,5 +1,5 @@
 #CS122: Group Project - Chess Heatmaps
-# for generating heatmaps
+#
 #Names: Will Simkins, Natalie Gray, Steven Cooklev
 
 
@@ -15,7 +15,6 @@ KNIGHT_DIFFS = [(1, 2), (1, -2), (-1, 2), (-1, -2), (2, 1), (2, -1), (-2, 1), (-
 
 def generate_moved_to_data(move_list, color, piece):
 	heatmap_data = np.zeros((8,8))
-	kingside = 0
 
 	for move_tup in move_list:
 		move = move_tup[0]
@@ -26,13 +25,7 @@ def generate_moved_to_data(move_list, color, piece):
 			destination = destination.group()
 			destination_tuples = [(LETTER_TO_NUM[destination[0]], int(destination[1]))]
 
-			if destination_tuples[0][1] >= 5:
-				kingside += 1
-
-
-
 		elif move == "0-0":
-			kingside += 1
 			if piece == "rook":
 				if color == "white":
 					destination_tuples = [(6, 1)]
@@ -69,7 +62,7 @@ def generate_moved_to_data(move_list, color, piece):
 		for destination_tuple in destination_tuples:
 			heatmap_data[tuple(np.subtract(destination_tuple, (1, 1)))] += 1
 
-	return np.rot90(heatmap_data).astype("int"), kingside
+	return np.rot90(heatmap_data).astype("int")
 
 
 
@@ -100,6 +93,7 @@ def generate_time_spent_data(white_move_list, black_move_list):
        ["WR", "WN", "WB", "WQ", "WK", "WB", "WN", "WR"]])
 
 	cur_locs = STARTING_SQUARES
+
 
 	for piece in white_data.keys():
 		white_ss = STARTING_SQUARES["white"][piece]
@@ -134,13 +128,11 @@ def generate_time_spent_data(white_move_list, black_move_list):
 			cur_board[convert_tup(prev_loc)] = "e " 
 			cur_board[convert_tup(destination_tuple)] = "WQ"
 
-
 		elif white_move[0] == "B":
 			destination = re.search("[a-h][1-8]", white_move).group()
 			destination_tuple = (LETTER_TO_NUM[destination[0]], int(destination[1]))
 			
 			bishop_locs = cur_locs["white"]["bishop"]
-
 			if len(bishop_locs) == 1:
 				prev_loc = bishop_locs[0]
 				cur_locs["white"]["bishop"] = []
@@ -149,12 +141,11 @@ def generate_time_spent_data(white_move_list, black_move_list):
 					loc = bishop_locs[i]
 					diff = tuple(np.subtract(destination_tuple, loc))
 					if diff[1] != 0:
-						div = float(diff[0]) / diff[1]
+						div = diff[0] / diff[1]
 						if div == 1 or div == -1:
 							prev_loc = loc
 							del bishop_locs[i]
 							break
-
 
 			cur_locs["white"]["bishop"].append(destination_tuple)
 			cur_board[convert_tup(prev_loc)] = "e "
@@ -233,7 +224,7 @@ def generate_time_spent_data(white_move_list, black_move_list):
 					if loc[0] == destination_tuple[0]:
 						blocked = False
 						for j in range(min(loc[1], destination_tuple[1]) + 1, max(loc[1], destination_tuple[1])):
-							if cur_board[8 - j][loc[0] - 1] != "e ":
+							if cur_board[8 - loc[0]][j - 1] != "e ":
 								blocked = True
 								break
 						if not blocked:
@@ -242,7 +233,7 @@ def generate_time_spent_data(white_move_list, black_move_list):
 							break
 					if loc[1] == destination_tuple[1]:
 						blocked = False
-						for j in range(min(loc[0], destination_tuple[0]) + 1, max(loc[0], destination_tuple[0])):
+						for j in range(min(loc[0], destination_tuple[0]), max(loc[0], destination_tuple[0])):
 							if cur_board[8 - loc[1]][j - 1] != "e ":
 								blocked = True
 								break
@@ -260,21 +251,18 @@ def generate_time_spent_data(white_move_list, black_move_list):
 			pawn_locs = cur_locs["white"]["pawn"]
 			
 			if "x" not in white_move:
-				moved = False
 				for i in range(len(pawn_locs)):
 					loc = pawn_locs[i]
 					if loc[0] == destination_tuple[0] and loc[1] == destination_tuple[1] - 1:
 						prev_loc = loc
 						del pawn_locs[i]
-						moved = True
 						break
-				if not moved:
-					for i in range(len(pawn_locs)):
-						loc = pawn_locs[i]
-						if loc[0] == destination_tuple[0] and loc[1] == 2 and destination_tuple[1] == 4:
-							prev_loc = loc
-							del pawn_locs[i]
-							break
+				for i in range(len(pawn_locs)):
+					loc = pawn_locs[i]
+					if loc[0] == destination_tuple[0] and loc[1] == 2 and destination_tuple[1] == 4:
+						prev_loc = loc
+						del pawn_locs[i]
+						break
 			else:
 				letter = white_move[0]
 				file_num = LETTER_TO_NUM[letter]
@@ -314,8 +302,6 @@ def generate_time_spent_data(white_move_list, black_move_list):
 
 
 		if white_move == "0-0":
-			prev_loc = (0,0)
-			destination_tuple = (0,0)
 			cur_locs["white"]["rook"].remove((8, 1))
 			cur_locs["white"]["rook"].append((6, 1))
 			cur_locs["white"]["king"] = [(7,1)]
@@ -325,8 +311,6 @@ def generate_time_spent_data(white_move_list, black_move_list):
 			cur_board[7][5] = "WR"
 
 		if white_move == "0-0-0":
-			prev_loc = (0,0)
-			destination_tuple = (0,0)
 			cur_locs["white"]["rook"].remove((1, 1))
 			cur_locs["white"]["rook"].append((4, 1))
 			cur_locs["white"]["king"] = [(3,1)]
@@ -345,9 +329,6 @@ def generate_time_spent_data(white_move_list, black_move_list):
 						del cur_locs["black"][piece][i]
 						break
 
-
-		if determine_aggression(prev_loc, destination_tuple, "white"):
-			white_aggression += 1
 
 		en_passant = False
 
@@ -380,8 +361,8 @@ def generate_time_spent_data(white_move_list, black_move_list):
 					for i in range(len(bishop_locs)):
 						loc = bishop_locs[i]
 						diff = tuple(np.subtract(destination_tuple, loc))
+						div = diff[0] / diff[1]
 						if diff[1] != 0:
-							div = float(diff[0]) / diff[1]
 							if div == 1 or div == -1:
 								prev_loc = loc
 								del bishop_locs[i]
@@ -463,8 +444,8 @@ def generate_time_spent_data(white_move_list, black_move_list):
 						loc = rook_locs[i]
 						if loc[0] == destination_tuple[0]:
 							blocked = False
-							for j in range(min(loc[1], destination_tuple[1]) + 1, max(loc[1], destination_tuple[1])):
-								if cur_board[8 - j][loc[0] - 1] != "e ":
+							for j in range(min(loc[1], destination_tuple[1]), max(loc[1], destination_tuple[1])):
+								if cur_board[8 - loc[0]][j - 1] != "e ":
 									blocked = True
 									break
 							if not blocked:
@@ -473,7 +454,7 @@ def generate_time_spent_data(white_move_list, black_move_list):
 								break
 						elif loc[1] == destination_tuple[1]:
 							blocked = False
-							for j in range(min(loc[0], destination_tuple[0]) + 1, max(loc[0], destination_tuple[0])):
+							for j in range(min(loc[0], destination_tuple[0]), max(loc[0], destination_tuple[0])):
 								if cur_board[8 - loc[1]][j - 1] != "e ":
 									blocked = True
 									break
@@ -492,22 +473,18 @@ def generate_time_spent_data(white_move_list, black_move_list):
 				pawn_locs = cur_locs["black"]["pawn"]
 				
 				if "x" not in black_move:
-					moved = False
 					for i in range(len(pawn_locs)):
 						loc = pawn_locs[i]
 						if loc[0] == destination_tuple[0] and loc[1] == destination_tuple[1] + 1:
 							prev_loc = loc
 							del pawn_locs[i]
-							moved = True
 							break
-
-					if not moved:
-						for i in range(len(pawn_locs)):
-							loc = pawn_locs[i]
-							if loc[0] == destination_tuple[0] and loc[1] == 7 and destination_tuple[1] == 5:
-								prev_loc = loc
-								del pawn_locs[i]
-								break
+					for i in range(len(pawn_locs)):
+						loc = pawn_locs[i]
+						if loc[0] == destination_tuple[0] and loc[1] == 7 and destination_tuple[1] == 5:
+							prev_loc = loc
+							del pawn_locs[i]
+							break
 				else:
 					letter = black_move[0]
 					file_num = LETTER_TO_NUM[letter]
@@ -545,8 +522,6 @@ def generate_time_spent_data(white_move_list, black_move_list):
 
 
 			if black_move == "0-0":
-				prev_loc = (0,0)
-				destination_tuple = (0, 0)
 				cur_locs["black"]["rook"].remove((8, 8))
 				cur_locs["black"]["rook"].append((6, 8))
 				cur_locs["black"]["king"] = [(7, 8)]
@@ -556,8 +531,6 @@ def generate_time_spent_data(white_move_list, black_move_list):
 				cur_board[0][5] = "BR"
 
 			if black_move == "0-0-0":
-				prev_loc = (0,0)
-				destination_tuple = (0, 0)
 				cur_locs["black"]["rook"].remove((1, 8))
 				cur_locs["black"]["rook"].append((4, 8))
 				cur_locs["black"]["king"] = [(3, 8)]
@@ -574,10 +547,6 @@ def generate_time_spent_data(white_move_list, black_move_list):
 							del cur_locs["white"][piece][i]
 							break
 
-			if determine_aggression(prev_loc, destination_tuple, "black"):
-				black_aggression += 1
-
-
 		for piece in cur_locs["white"].keys():
 			for loc in cur_locs["white"][piece]:
 				if piece != "all":
@@ -590,7 +559,7 @@ def generate_time_spent_data(white_move_list, black_move_list):
 		white_data[piece] = white_data[piece].astype("int")
 		black_data[piece] = black_data[piece].astype("int")
 
-	return white_data, black_data, white_aggression, black_aggression
+	return white_data, black_data
  
 
 def generate_captures_heatmap(move_list):
@@ -609,7 +578,7 @@ def calculate_trade_statistics(white_move_lists, black_move_lists, num_moves_whi
 	black_captures = 0
 	white_recaptures = 0
 	black_recaptures = 0
-	
+
 	for i in range(len(white_move_lists)):
 		white_move_list = white_move_lists[i]
 		black_move_list = black_move_lists[i]
@@ -636,6 +605,7 @@ def calculate_trade_statistics(white_move_lists, black_move_lists, num_moves_whi
 					if white_capture_loc == black_capture_loc:
 						black_recaptures += 1
 
+
 	white_capture_percent = float(white_captures)/num_moves_white
 	black_capture_percent = float(black_captures)/num_moves_black
 	white_recapture_percent = float(white_recaptures)/white_captures
@@ -648,15 +618,6 @@ def calculate_trade_statistics(white_move_lists, black_move_lists, num_moves_whi
 def convert_tup(tup):
 	return (8 - tup[1], tup[0] - 1)
 
-
-def determine_aggression(prev_loc, destination_tuple, color):
-	if color == "white":
-		if destination_tuple[1] > prev_loc[1]:
-			return True
-	else:
-		if destination_tuple[1] < prev_loc[1]:
-			return True
-	return False
 
 
 
