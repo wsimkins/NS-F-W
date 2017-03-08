@@ -183,6 +183,8 @@ class SearchFormCompare(forms.Form):
     annotation_c = forms.ChoiceField(label='Display Counts', choices=ANNOTATION, required=True)
     map_type_c = forms.ChoiceField(label='Heatmap Type', choices=MAP_TYPE, required=True)
 
+def info(request):
+    return render(request, 'info.html')
 
 def home(request):
     context = {}
