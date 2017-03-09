@@ -26,9 +26,8 @@ def generate_moved_to_data(move_list, color, piece):
 			destination = destination.group()
 			destination_tuples = [(LETTER_TO_NUM[destination[0]], int(destination[1]))]
 
-			if destination_tuples[0][1] >= 5:
+			if destination_tuples[0][0] >= 5:
 				kingside += 1
-
 
 
 		elif move == "0-0":
@@ -117,6 +116,7 @@ def generate_time_spent_data(white_move_list, black_move_list):
 		black_move = None
 		if move_num < len(black_move_list):
 			black_move = black_move_list[move_num][0]
+
 
 		if white_move[0] == "K":
 			destination = re.search("[a-h][1-8]", white_move).group()
