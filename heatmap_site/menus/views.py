@@ -99,7 +99,7 @@ class RatingsRange(IntegerRange):
 
 
 class YearRange(IntegerRange):
-     def compress(self, values):
+    def compress(self, values):
         super(YearRange, self).compress(values)
         for v in values:
             if not (1475 <= v <= 2013):
@@ -204,15 +204,19 @@ def heatmap_display(request):
     args = {}
     if d.get("years_0", False):
         args['year_min'] = d["years_0"]
+    if d.get("years_1", False):
         args['year_max'] = d["years_1"]
     if d.get("num_move_0", False):
         args['num_move_min'] = d["num_move_0"]
+    if d.get("num_move_1", False):
         args['num_move_max'] = d["num_move_1"]
     if d.get("ratings_w_0", False):
         args['white_rating_min'] = d["ratings_w_0"]
+    if d.get("ratings_w_1", False):
         args['white_rating_max'] = d["ratings_w_1"]
     if d.get("ratings_b_0", False):
         args['black_rating_min'] = d["ratings_b_0"]
+    if d.get("ratings_b_1", False):
         args['black_rating_max'] = d["ratings_b_1"]
     if d.get("ecos", False):
         args['ECO'] = d["ecos"]
@@ -258,16 +262,8 @@ def heatmap_comp_menu(request):
 def heatmap_display_comp(request):
     context = {}
 
-    print(request.POST)
-    print()
-
     d = request.POST.dict()
     d_c = request.POST.dict()
-
-    print(d, "d")
-    print()
-    print(d_c, "d_c")
-    print()
 
     args = {}
     if d.get("years_0", False):
@@ -330,8 +326,6 @@ def heatmap_display_comp(request):
         args_c['heatmap_type'] = d_c["map_type_c"]
     
     a,b,c,d,e,f = queries.generate_comparison_from_user_input([args, args_c])
-
-    print(a,b,c,d,e,f)
 
     if not a:
         return render(request, '405.html')
