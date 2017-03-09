@@ -159,7 +159,7 @@ def generate_comparison_from_user_input(input_list):
 	meandiff = compare_heatmaps(df1, df2, num_moves1, num_moves2, title1, title2, annot1, annot2)
 
 	stats5 = " "
-	stats6 = "Mean Magnitude of Normalized Differences: " + str(meandiff)
+	stats6 = "Mean Magnitude of Normalized Differences: " + str(round(meandiff, 3))
 
 	return stats1, stats2, stats3, stats4, stats5, stats6
 
