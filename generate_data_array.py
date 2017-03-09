@@ -111,6 +111,9 @@ def generate_time_spent_data(white_move_list, black_move_list):
 	white_aggression = 0
 	black_aggression = 0
 
+	print(white_move_list)
+	print(black_move_list)
+
 	for move_num in range(len(white_move_list)):
 		en_passant = False
 		white_move = white_move_list[move_num][0]
