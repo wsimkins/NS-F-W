@@ -28,7 +28,7 @@ COLUMN_NAMES = dict(
 
 def _valid_result(res):
     """
-    Validates results returned by ????????????????????????
+    Validates results
     """
     (HEADER, RESULTS) = [0,1]
     ok = (isinstance(res, (tuple, list)) and 
@@ -102,7 +102,6 @@ class YearRange(IntegerRange):
      def compress(self, values):
         super(YearRange, self).compress(values)
         for v in values:
-            print(v, "this should be v why")
             if not (1475 <= v <= 2013):
                 raise forms.ValidationError('Year bounds must be in the range 1475 to 2013.')
         if values and (values[1] < values[0]):
@@ -126,7 +125,7 @@ RANGE_WIDGET = forms.widgets.MultiWidget(widgets=(forms.widgets.NumberInput,
 class SearchForm(forms.Form):
     years = YearRange(
                 label='Year(s)',
-                help_text='1475-2013',
+                help_text='1858-2013',
                 widget=RANGE_WIDGET,
                 required=False)
     num_move = MoveNumberRange(

@@ -10,6 +10,7 @@ import matplotlib.gridspec as gridspec
 import seaborn as sns
 import sqlite3 as sql
 import os
+from textwrap import wrap
 
 import generate_data_array as gda
 
@@ -53,7 +54,7 @@ def generate_heatmap_from_user_input(input_dict):
 
 	plt.subplot(111)
 	sns.heatmap(df, annot=annot, fmt="d", cmap = "Reds", xticklabels = XLABELS, yticklabels = YLABELS)
-	plt.title(title)
+	plt.title("\n".join(wrap(title, 60)))
 
 	sns.plt.savefig("static/heatmap.png")
 	plt.clf()
@@ -142,7 +143,7 @@ def generate_comparison_from_user_input(input_list):
 		stats3 = "Heatmap 2: Percent of " + input_dict2["piece"] + " moves to kingside: " + str(round(100*ksp, 2))
 	elif heatmap_type2 == "time spent":
 		df2, num_moves2, ai = time_spent_query(gameids2, input_dict2["color"], input_dict2["piece"])
-		stats2 = "Heatmap 2: Percent of forward moves: " + str(round(100*ai, 2))
+		stats3 = "Heatmap 2: Percent of forward moves: " + str(round(100*ai, 2))
 	elif heatmap_type2 == "captures":
 		cp, rp, df2, num_moves2 = captures_query(gameids2, input_dict2["color"], input_dict2["piece"])
 		if cp:
@@ -324,13 +325,13 @@ def compare_heatmaps(df1, df2, num_moves1, num_moves2, title1, title2, annot1, a
 
 	plt.figure(1)
 	sns.heatmap(df1, annot=annot1, fmt="d", cmap = "Reds", xticklabels = XLABELS, yticklabels = YLABELS, square=True)
-	plt.title(title1)
+	plt.title("\n".join(wrap(title2, 60)))
 	sns.plt.savefig("static/heatmap1.png")
 	sns.plt.clf()
 
 	plt.figure(2)
 	sns.heatmap(df2, annot=annot2, fmt="d", cmap = "Reds", xticklabels = XLABELS, yticklabels = YLABELS, square=True)
-	plt.title(title2)
+	plt.title("\n".join(wrap(title2, 60)))
 	sns.plt.savefig("static/heatmap2.png")
 	sns.plt.clf()
 
@@ -417,15 +418,15 @@ def create_plot_title(input_dict, num_games):
 	if input_dict.get('year_min', None) and input_dict.get('year_max', None):
 		title += "played between " + input_dict['year_min'] + " and " + input_dict['year_max'] + " "
 	
-	if input_dict.get('year_min', None):
+	elif input_dict.get('year_min', None):
 		title += "played after " + input_dict['year_min'] + " "
 		
-	if input_dict.get('year_max', None):
+	elif input_dict.get('year_max', None):
 		title += "played before " + input_dict['year_max'] + " "
 		
 	opening = ' '
 	if input_dict.get('ECO', None):
-		opening = " Opening code: " + input_dict.get('ECO', '')
+		opening = " Opening code: " + input_dict.get('ECO', '') + " "
 	title += opening
 	
 	if input_dict.get('num_moves_min', None) and input_dict.get('num_moves_max', None):

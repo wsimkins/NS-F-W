@@ -110,6 +110,8 @@ def generate_time_spent_data(white_move_list, black_move_list):
 	white_aggression = 0
 	black_aggression = 0
 
+	print(white_move_list)
+
 	for move_num in range(len(white_move_list)):
 		en_passant = False
 		white_move = white_move_list[move_num][0]
@@ -165,6 +167,8 @@ def generate_time_spent_data(white_move_list, black_move_list):
 			destination_tuple = (LETTER_TO_NUM[destination[0]], int(destination[1]))
 			
 			knight_locs = cur_locs["white"]["knight"]
+			print(knight_locs)
+			print(white_move)
 			disambig_let = re.search("[a-h]{2}", white_move)
 			disambig_num = re.search("[1-8][a-h]", white_move)
 			if len(knight_locs) == 1:
@@ -180,7 +184,7 @@ def generate_time_spent_data(white_move_list, black_move_list):
 						del knight_locs[i]
 						break
 			elif disambig_num:
-				rank_num = int(LETTER_TO_NUM[disambig_num.group()[1]])
+				rank_num = int(disambig_num.group()[0])
 				for i in range(len(knight_locs)):
 					loc = knight_locs[i]
 					if loc[1] == rank_num:
