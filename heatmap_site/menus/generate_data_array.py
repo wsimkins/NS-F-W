@@ -107,10 +107,10 @@ def generate_time_spent_data(white_move_list, black_move_list):
 			white_data[piece][8 - white_ss[i][1]][white_ss[i][0] - 1] = 1
 			black_data[piece][8 - black_ss[i][1]][black_ss[i][0] - 1] = 1
 
-	white_aggression = 0
-	black_aggression = 0
-
-	print(white_move_list)
+	wl = len(white_move_list)
+	bl = len(black_move_list)
+	white_aggression = {"Rook":[0,0], "Knight":[0,0], "Bishop":[0,0], "Queen":[0,0], "King":[0,0], "Pawn":[0,0], "All":[0,wl]}
+	black_aggression = {"Rook":[0,0], "Knight":[0,0], "Bishop":[0,0], "Queen":[0,0], "King":[0,0], "Pawn":[0,0], "All":[0,bl]}
 
 	for move_num in range(len(white_move_list)):
 		en_passant = False
@@ -127,6 +127,11 @@ def generate_time_spent_data(white_move_list, black_move_list):
 			cur_locs["white"]["king"][0] = destination_tuple
 			cur_board[convert_tup(prev_loc)] = "e "
 			cur_board[convert_tup(destination_tuple)] = "WK"
+			
+			if determine_aggression(prev_loc, destination_tuple, "white"):
+				white_aggression["King"][0] += 1
+				white_aggression["All"][0] += 1
+			white_aggression["King"][1] += 1
 
 		elif white_move[0] == "Q":
 			destination = re.search("[a-h][1-8]", white_move).group()
@@ -135,6 +140,11 @@ def generate_time_spent_data(white_move_list, black_move_list):
 			cur_locs["white"]["queen"][0] = destination_tuple
 			cur_board[convert_tup(prev_loc)] = "e " 
 			cur_board[convert_tup(destination_tuple)] = "WQ"
+
+			if determine_aggression(prev_loc, destination_tuple, "white"):
+				white_aggression["Queen"][0] += 1
+				white_aggression["All"][0] += 1
+			white_aggression["Queen"][1] += 1
 
 
 		elif white_move[0] == "B":
@@ -162,13 +172,17 @@ def generate_time_spent_data(white_move_list, black_move_list):
 			cur_board[convert_tup(prev_loc)] = "e "
 			cur_board[convert_tup(destination_tuple)] = "WB"
 
+			if determine_aggression(prev_loc, destination_tuple, "white"):
+				white_aggression["Bishop"][0] += 1
+				white_aggression["All"][0] += 1
+			white_aggression["Bishop"][1] += 1
+
+
 		elif white_move[0] == "N":
 			destination = re.search("[a-h][1-8]", white_move).group()
 			destination_tuple = (LETTER_TO_NUM[destination[0]], int(destination[1]))
 			
 			knight_locs = cur_locs["white"]["knight"]
-			print(knight_locs)
-			print(white_move)
 			disambig_let = re.search("[a-h]{2}", white_move)
 			disambig_num = re.search("[1-8][a-h]", white_move)
 			if len(knight_locs) == 1:
@@ -203,6 +217,11 @@ def generate_time_spent_data(white_move_list, black_move_list):
 			cur_locs["white"]["knight"].append(destination_tuple)
 			cur_board[convert_tup(prev_loc)] = "e "
 			cur_board[convert_tup(destination_tuple)] = "WN"
+			if determine_aggression(prev_loc, destination_tuple, "white"):
+				white_aggression["Knight"][0] += 1
+				white_aggression["All"][0] += 1
+			white_aggression["Knight"][1] += 1
+
 
 		elif white_move[0] == "R":
 			destination = re.search("[a-h][1-8]", white_move).group()
@@ -257,6 +276,12 @@ def generate_time_spent_data(white_move_list, black_move_list):
 			cur_locs["white"]["rook"].append(destination_tuple)
 			cur_board[convert_tup(prev_loc)] = "e "
 			cur_board[convert_tup(destination_tuple)] = "WR"
+
+			if determine_aggression(prev_loc, destination_tuple, "white"):
+				white_aggression["Rook"][0] += 1
+				white_aggression["All"][0] += 1
+			white_aggression["Rook"][1] += 1
+
 
 		elif white_move[0].islower():
 			destination = re.search("[a-h][1-8]", white_move).group()
@@ -316,6 +341,11 @@ def generate_time_spent_data(white_move_list, black_move_list):
 					cur_locs["white"]["knight"].append(destination_tuple)
 					cur_board[convert_tup(destination_tuple)] = "WN"
 
+			
+			white_aggression["Pawn"][0] += 1
+			white_aggression["All"][0] += 1
+			white_aggression["Pawn"][1] += 1
+
 
 		if white_move == "0-0":
 			prev_loc = (0,0)
@@ -328,6 +358,10 @@ def generate_time_spent_data(white_move_list, black_move_list):
 			cur_board[7][6] = "WK"
 			cur_board[7][5] = "WR"
 
+			white_aggression["King"][1] += 1
+			white_aggression["Rook"][1] += 1
+
+
 		if white_move == "0-0-0":
 			prev_loc = (0,0)
 			destination_tuple = (0,0)
@@ -338,6 +372,9 @@ def generate_time_spent_data(white_move_list, black_move_list):
 			cur_board[7][4] = "e "
 			cur_board[7][2] = "WK"
 			cur_board[7][3] = "WR"
+
+			white_aggression["King"][1] += 1
+			white_aggression["Rook"][1] += 1
 
 
 
@@ -350,8 +387,7 @@ def generate_time_spent_data(white_move_list, black_move_list):
 						break
 
 
-		if determine_aggression(prev_loc, destination_tuple, "white"):
-			white_aggression += 1
+		
 
 		en_passant = False
 
@@ -364,6 +400,12 @@ def generate_time_spent_data(white_move_list, black_move_list):
 				cur_board[convert_tup(prev_loc)] = "e "
 				cur_board[convert_tup(destination_tuple)] = "BK"
 
+				if determine_aggression(prev_loc, destination_tuple, "black"):
+					black_aggression["King"][0] += 1
+					black_aggression["All"][0] += 1
+				black_aggression["King"][1] += 1
+
+
 			elif black_move[0] == "Q":
 				destination = re.search("[a-h][1-8]", black_move).group()
 				destination_tuple = (LETTER_TO_NUM[destination[0]], int(destination[1]))
@@ -371,6 +413,12 @@ def generate_time_spent_data(white_move_list, black_move_list):
 				cur_locs["black"]["queen"][0] = destination_tuple
 				cur_board[convert_tup(prev_loc)] = "e " 
 				cur_board[convert_tup(destination_tuple)] = "BQ"
+
+				if determine_aggression(prev_loc, destination_tuple, "black"):
+					black_aggression["Queen"][0] += 1
+					black_aggression["All"][0] += 1
+				black_aggression["Queen"][1] += 1
+
 
 			elif black_move[0] == "B":
 				destination = re.search("[a-h][1-8]", black_move).group()
@@ -394,6 +442,12 @@ def generate_time_spent_data(white_move_list, black_move_list):
 				cur_locs["black"]["bishop"].append(destination_tuple)
 				cur_board[convert_tup(prev_loc)] = "e "
 				cur_board[convert_tup(destination_tuple)] = "BB"
+
+				if determine_aggression(prev_loc, destination_tuple, "black"):
+					black_aggression["Bishop"][0] += 1
+					black_aggression["All"][0] += 1
+				black_aggression["Bishop"][1] += 1
+
 
 			elif black_move[0] == "N":
 				destination = re.search("[a-h][1-8]", black_move).group()
@@ -434,6 +488,12 @@ def generate_time_spent_data(white_move_list, black_move_list):
 				cur_locs["black"]["knight"].append(destination_tuple)
 				cur_board[convert_tup(prev_loc)] = "e "
 				cur_board[convert_tup(destination_tuple)] = "BN"
+
+				if determine_aggression(prev_loc, destination_tuple, "black"):
+					black_aggression["Knight"][0] += 1
+					black_aggression["All"][0] += 1
+				black_aggression["Knight"][1] += 1
+
 
 			elif black_move[0] == "R":
 				destination = re.search("[a-h][1-8]", black_move).group()
@@ -489,6 +549,12 @@ def generate_time_spent_data(white_move_list, black_move_list):
 				cur_locs["black"]["rook"].append(destination_tuple)
 				cur_board[convert_tup(prev_loc)] = "e "
 				cur_board[convert_tup(destination_tuple)] = "BR"
+
+				if determine_aggression(prev_loc, destination_tuple, "black"):
+					black_aggression["Rook"][0] += 1
+					black_aggression["All"][0] += 1
+				black_aggression["Rook"][1] += 1
+
 
 			elif black_move[0].islower():
 				destination = re.search("[a-h][1-8]", black_move).group()
@@ -547,6 +613,11 @@ def generate_time_spent_data(white_move_list, black_move_list):
 						cur_locs["black"]["knight"].append(destination_tuple)
 						cur_board[convert_tup(destination_tuple)] = "BN"
 
+				if determine_aggression(prev_loc, destination_tuple, "black"):
+					black_aggression["Pawn"][0] += 1
+					black_aggression["All"][0] += 1
+				black_aggression["Pawn"][1] += 1
+
 
 			if black_move == "0-0":
 				prev_loc = (0,0)
@@ -559,6 +630,10 @@ def generate_time_spent_data(white_move_list, black_move_list):
 				cur_board[0][6] = "BK"
 				cur_board[0][5] = "BR"
 
+				black_aggression["Rook"][1] += 1
+				black_aggression["All"][1] += 1
+
+
 			if black_move == "0-0-0":
 				prev_loc = (0,0)
 				destination_tuple = (0, 0)
@@ -570,6 +645,10 @@ def generate_time_spent_data(white_move_list, black_move_list):
 				cur_board[0][2] = "BK"
 				cur_board[0][3] = "BR"
 
+				black_aggression["Rook"][1] += 1
+				black_aggression["All"][1] += 1
+
+
 			if "x" in black_move and not en_passant:
 				for piece in cur_locs["white"].keys():
 					for i in range(len(cur_locs["white"][piece])):
@@ -577,9 +656,6 @@ def generate_time_spent_data(white_move_list, black_move_list):
 						if loc == destination_tuple:
 							del cur_locs["white"][piece][i]
 							break
-
-			if determine_aggression(prev_loc, destination_tuple, "black"):
-				black_aggression += 1
 
 
 		for piece in cur_locs["white"].keys():

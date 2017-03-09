@@ -94,8 +94,6 @@ def games_query(input_dict):
 	else:
 		games_query = "SELECT gameid FROM games;"
 
-	print(games_query, args)
-
 	r = c.execute(games_query, args)
 	gameids = r.fetchall()
 	return gameids
@@ -158,10 +156,10 @@ def generate_comparison_from_user_input(input_list):
 	if input_dict2["annotation"] == "yes":
 		annot2 = True
 
-	compare_stats = compare_heatmaps(df1, df2, num_moves1, num_moves2, title1, title2, annot1, annot2)
+	meandiff = compare_heatmaps(df1, df2, num_moves1, num_moves2, title1, title2, annot1, annot2)
 
-	stats5 = "Mean Magnitude of Normalized Differences: " + str(compare_stats[0])
-	stats6 = "Standard Error of Magnitude of Normalized Differences: " + str(compare_stats[1])
+	stats5 = " "
+	stats6 = "Mean Magnitude of Normalized Differences: " + str(meandiff)
 
 	return stats1, stats2, stats3, stats4, stats5, stats6
 
@@ -213,6 +211,7 @@ def time_spent_query(gameids, color, piece):
 	df = np.zeros((8, 8))
 	num_moves = 0
 	aggression = 0
+	piece_moves = 0
 
 	for gameid in gameids:
 		gameid = gameid[0]
@@ -232,7 +231,8 @@ def time_spent_query(gameids, color, piece):
 			else:
 				df = np.add(df, white_dict[piece.lower()])
 			num_moves += len(white_moves)
-			aggression += white_aggression
+			aggression += white_aggression[piece][0]
+			piece_moves += white_aggression[piece][1]
 		else:
 			if piece == "All":
 				for key in black_dict:
@@ -240,8 +240,9 @@ def time_spent_query(gameids, color, piece):
 			else:
 				df = np.add(df, black_dict[piece.lower()])
 			num_moves += len(black_moves)
-			aggression += black_aggression
-	ai = float(aggression) / num_moves
+			aggression += black_aggression[piece][0]
+			piece_moves += black_aggression[piece][1]
+	ai = float(aggression) / piece_moves
 	return df, num_moves, ai
 
 
@@ -307,7 +308,11 @@ def compare_heatmaps(df1, df2, num_moves1, num_moves2, title1, title2, annot1, a
 	df1 = df1.astype("float")
 	df2 = df2.astype("float")
 
-	diff_df = (df1 / num_moves1) - (df2 / num_moves2)
+	df1_norm = df1 / df1.sum()
+	df2_norm = df2 / df2.sum()
+
+	diff_df = df1_norm - df2_norm
+
 
 	abs_diff = abs(diff_df)
 	mean_diff = np.mean(abs_diff)
@@ -315,17 +320,10 @@ def compare_heatmaps(df1, df2, num_moves1, num_moves2, title1, title2, annot1, a
 	df1 = df1.astype("int")
 	df2 = df2.astype("int")
 
-	sumsq = 0
-	for i in range(len(abs_diff)):
-	      for j in range(len(abs_diff[0])):
-	             sumsq += abs_diff[i][j]**2
-	sumsq /= 64
-	sd_diff = math.sqrt(sumsq)
-	SE_diff = sd_diff / 8
 
 	plt.figure(1)
 	sns.heatmap(df1, annot=annot1, fmt="d", cmap = "Reds", xticklabels = XLABELS, yticklabels = YLABELS, square=True)
-	plt.title("\n".join(wrap(title2, 60)))
+	plt.title("\n".join(wrap(title1, 60)))
 	sns.plt.savefig("static/heatmap1.png")
 	sns.plt.clf()
 
@@ -341,8 +339,7 @@ def compare_heatmaps(df1, df2, num_moves1, num_moves2, title1, title2, annot1, a
 	sns.plt.savefig("static/heatmapc.png")
 	plt.clf()
 
-	return [mean_diff, SE_diff]
-
+	return mean_diff*100
 
 
 
@@ -401,7 +398,7 @@ def create_plot_title(input_dict, num_games):
 		if input_dict.get('white_rating_min', None) and input_dict.get('white_rating_max', None):
 			title += "White rated between " + input_dict['white_rating_min'] + " and " + input_dict['white_rating_max'] + ", "
 		elif input_dict.get('white_rating_min', None):
-			title += "White rated at least " + input_dict.get['white_rating_min'] + ", "
+			title += "White rated at least " + input_dict['white_rating_min'] + ", "
 		elif input_dict.get('white_rating_max', None):
 			title += "White rated at most " + input_dict['white_rating_max'] + ", "
 
