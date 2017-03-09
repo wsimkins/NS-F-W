@@ -82,6 +82,7 @@ class IntegerRange(forms.MultiValueField):
                                            *args, **kwargs)
 
     def compress(self, values):
+        print("VALIDATE?")
         if values and (values[0] is None or values[1] is None):
             raise forms.ValidationError('Must specify both lower and upper '
                                         'bound, or leave both blank.')
@@ -99,7 +100,7 @@ class RatingsRange(IntegerRange):
 
 
 class YearRange(IntegerRange):
-     def compress(self, values):
+    def compress(self, values):
         super(YearRange, self).compress(values)
         for v in values:
             if not (1475 <= v <= 2013):
@@ -204,15 +205,19 @@ def heatmap_display(request):
     args = {}
     if d.get("years_0", False):
         args['year_min'] = d["years_0"]
+    if d.get("years_1", False):
         args['year_max'] = d["years_1"]
     if d.get("num_move_0", False):
         args['num_move_min'] = d["num_move_0"]
+    if d.get("num_move_1", False):
         args['num_move_max'] = d["num_move_1"]
     if d.get("ratings_w_0", False):
         args['white_rating_min'] = d["ratings_w_0"]
+    if d.get("ratings_w_1", False):
         args['white_rating_max'] = d["ratings_w_1"]
     if d.get("ratings_b_0", False):
         args['black_rating_min'] = d["ratings_b_0"]
+    if d.get("ratings_b_1", False):
         args['black_rating_max'] = d["ratings_b_1"]
     if d.get("ecos", False):
         args['ECO'] = d["ecos"]
