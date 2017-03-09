@@ -82,7 +82,6 @@ class IntegerRange(forms.MultiValueField):
                                            *args, **kwargs)
 
     def compress(self, values):
-        print("VALIDATE?")
         if values and (values[0] is None or values[1] is None):
             raise forms.ValidationError('Must specify both lower and upper '
                                         'bound, or leave both blank.')
@@ -263,16 +262,8 @@ def heatmap_comp_menu(request):
 def heatmap_display_comp(request):
     context = {}
 
-    print(request.POST)
-    print()
-
     d = request.POST.dict()
     d_c = request.POST.dict()
-
-    print(d, "d")
-    print()
-    print(d_c, "d_c")
-    print()
 
     args = {}
     if d.get("years_0", False):
@@ -335,8 +326,6 @@ def heatmap_display_comp(request):
         args_c['heatmap_type'] = d_c["map_type_c"]
     
     a,b,c,d,e,f = queries.generate_comparison_from_user_input([args, args_c])
-
-    print(a,b,c,d,e,f)
 
     if not a:
         return render(request, '405.html')
