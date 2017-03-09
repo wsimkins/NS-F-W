@@ -37,8 +37,9 @@ def generate_heatmap_from_user_input(input_dict):
 		stats1 = "Percent moves foward: " + str(round(100*ai, 2))
 	elif heatmap_type == "captures":
 		cp, rp, df, num_moves = captures_query(gameids, input_dict["color"], input_dict["piece"])
-		stats1 = "Percent of moves which are captures: " + str(round(100*cp, 2))  
-		stats2 = "Percent of moves which are recaptures: " + str(round(100*rp, 2))
+		if cp:
+			stats1 = "Percent of moves which are captures: " + str(round(100*cp, 2))  
+			stats2 = "Percent of moves which are recaptures: " + str(round(100*rp, 2))
 
 	annot = False
 	if input_dict["annotation"] == "yes":
@@ -130,21 +131,23 @@ def generate_comparison_from_user_input(input_list):
 		stats1 = "Heatmap 1: Percent of forward moves: " + str(round(100*ai, 2))
 	elif heatmap_type1 == "captures":
 		cp, rp, df1, num_moves1 = captures_query(gameids1, input_dict1["color"], input_dict1["piece"])
-		stats1 = "Heatmap 1: Percent of moves which are captures: " + str(round(100*cp, 2))  
-		stats2 = "Heatmap 1: Percent of moves which are recaptures: " + str(round(100*rp, 2))
+		if cp:
+			stats1 = "Heatmap 1: Percent of moves which are captures: " + str(round(100*cp, 2))  
+			stats2 = "Heatmap 1: Percent of moves which are recaptures: " + str(round(100*rp, 2))
 
 	heatmap_type2 = input_dict2["heatmap_type"]
 
 	if heatmap_type2 == "moved to":
 		df2, num_moves2, ksp = moved_to_query(gameids2, input_dict2["color"], input_dict2["piece"])
 		stats3 = "Heatmap 2: Percent of " + input_dict2["piece"] + " moves to kingside: " + str(round(100*ksp, 2))
-	elif heatmap_type1 == "time spent":
+	elif heatmap_type2 == "time spent":
 		df2, num_moves2, ai = time_spent_query(gameids2, input_dict2["color"], input_dict2["piece"])
 		stats2 = "Heatmap 2: Percent of forward moves: " + str(round(100*ai, 2))
 	elif heatmap_type2 == "captures":
 		cp, rp, df2, num_moves2 = captures_query(gameids2, input_dict2["color"], input_dict2["piece"])
-		stats3 = "Heatmap 2: Percent of moves which are captures: " + str(round(100*cp, 2))  
-		stats4 = "Heatmap 2: Percent of moves which are recaptures: " + str(round(100*rp, 2))
+		if cp:
+			stats3 = "Heatmap 2: Percent of moves which are captures: " + str(round(100*cp, 2))  
+			stats4 = "Heatmap 2: Percent of moves which are recaptures: " + str(round(100*rp, 2))
 
 	annot1 = False
 	if input_dict1["annotation"] == "yes":

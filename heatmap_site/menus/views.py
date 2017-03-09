@@ -85,26 +85,26 @@ class IntegerRange(forms.MultiValueField):
         if values and (values[0] is None or values[1] is None):
             raise forms.ValidationError('Must specify both lower and upper '
                                         'bound, or leave both blank.')
-
         return values
 
 class RatingsRange(IntegerRange):
     def compress(self, values):
-            super(RatingsRange, self).compress(values)
-            for v in values:
-                if not (0 <= v <= 3000):
-                    raise forms.ValidationError('Ratings bounds must be in the range 0 to 3000.')
-            if values and (values[1] < values[0]):
-                raise forms.ValidationError('Lower bound must not exceed upper bound.')
-            return values
+        super(RatingsRange, self).compress(values)
+        for v in values:
+            if not (0 <= v <= 3000):
+                raise forms.ValidationError('Ratings bounds must be in the range 0 to 3000.')
+        if values and (values[1] < values[0]):
+            raise forms.ValidationError('Lower bound must not exceed upper bound.')
+        return values
 
 
 class YearRange(IntegerRange):
      def compress(self, values):
         super(YearRange, self).compress(values)
         for v in values:
+            print(v, "this should be v why")
             if not (1475 <= v <= 2013):
-                    raise forms.ValidationError('Year bounds must be in the range 1475 to 2013.')
+                raise forms.ValidationError('Year bounds must be in the range 1475 to 2013.')
         if values and (values[1] < values[0]):
             raise forms.ValidationError('Lower bound must not exceed upper bound.')
         return values
