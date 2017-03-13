@@ -1,6 +1,12 @@
 import sqlite3
 import csv
 
+"""
+IMPORTANT: This file and its generate_lists function must be run before using
+a new database or switching databases to properly populate the csv files from 
+which the dropdown menus are formed. 
+"""
+
 def generate_lists():
 
 #destination: cp cooklev /heatmap_site/res
