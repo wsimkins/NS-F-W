@@ -63,6 +63,8 @@ def _build_dropdown(options):
     """
     return [(x, x) if x is not None else ('', NOPREF_STR) for x in options]
 
+# builds dropdowns based on either a set list of options or from the choices found in the
+# relevant csv file. 
 PLAYERS = _build_dropdown([None] + _load_res_column('player_list.csv'))
 RESULTS = _build_dropdown([None] + _load_res_column('result_list.csv'))
 ECOS = _build_dropdown([None] + ["A00-A39", "A40-A99", "B00-B19", "B20-B99", "C00-C19", "C20-C99", "D00-D69", "D70-E99"])
@@ -82,40 +84,22 @@ class IntegerRange(forms.MultiValueField):
                                            *args, **kwargs)
 
     def compress(self, values):
-        if values and (values[0] is None or values[1] is None):
-            raise forms.ValidationError('Must specify both lower and upper '
-                                        'bound, or leave both blank.')
         return values
 
 class RatingsRange(IntegerRange):
     def compress(self, values):
         super(RatingsRange, self).compress(values)
-        for v in values:
-            if not (0 <= v <= 3000):
-                raise forms.ValidationError('Ratings bounds must be in the range 0 to 3000.')
-        if values and (values[1] < values[0]):
-            raise forms.ValidationError('Lower bound must not exceed upper bound.')
         return values
 
 
 class YearRange(IntegerRange):
     def compress(self, values):
         super(YearRange, self).compress(values)
-        for v in values:
-            if not (1475 <= v <= 2013):
-                raise forms.ValidationError('Year bounds must be in the range 1475 to 2013.')
-        if values and (values[1] < values[0]):
-            raise forms.ValidationError('Lower bound must not exceed upper bound.')
         return values
 
 class MoveNumberRange(IntegerRange):
     def compress(self, values):
         super(MoveNumberRange, self).compress(values)
-        for v in values:
-            if not (0 <= v <= 300):
-                    raise forms.ValidationError('Move number bounds must be in the range 0 to 300.')
-        if values and (values[1] < values[0]):
-            raise forms.ValidationError('Lower bound must not exceed upper bound.')
         return values
 
 RANGE_WIDGET = forms.widgets.MultiWidget(widgets=(forms.widgets.NumberInput,
@@ -123,6 +107,12 @@ RANGE_WIDGET = forms.widgets.MultiWidget(widgets=(forms.widgets.NumberInput,
 
 
 class SearchForm(forms.Form):
+    """
+    Form class which includes all the specifications for the heatmaps. A 
+    combination of ranged specifications (years, move numbers, player ratings)
+    and dropdown menus (result, ecos, player names, color, piece, annotations, 
+    and heatmap type).
+    """
     years = YearRange(
                 label='Year(s)',
                 help_text='1858-2013',
@@ -153,9 +143,13 @@ class SearchForm(forms.Form):
     map_type = forms.ChoiceField(label='Heatmap Type', choices=MAP_TYPE, required=True)
 
 class SearchFormCompare(forms.Form):
-    years_c = YearRange(
+    """
+    Identical options to the SearchForm class, but with different variable names so 
+    that when making a comparison heatmap the argument dictionaries for heatmap 1
+    and heatmap 2 have distinct keys 
+    """
                 label='Year(s)',
-                help_text='1475-2013',
+                help_text='1858-2013',
                 widget=RANGE_WIDGET,
                 required=False)
     num_move_c = MoveNumberRange(
@@ -183,9 +177,15 @@ class SearchFormCompare(forms.Form):
     map_type_c = forms.ChoiceField(label='Heatmap Type', choices=MAP_TYPE, required=True)
 
 def info(request):
+    """
+    Displays the information page. 
+    """
     return render(request, 'info.html')
 
 def home(request):
+    """
+    Displays the homepage, with links and the menu for a single heatmap. 
+    """
     context = {}
     res = None
     if request.method == 'GET':
@@ -199,8 +199,13 @@ def home(request):
     return render(request, 'menu.html', context)
 
 def heatmap_display(request):
+    """
+    Displays single heatmaps based on user input. 
+    """
     context = {}
     d = request.POST.dict()
+    # creation of an arguments dictionary that will be fed into
+    # generate_heatmap_from_user_input
     args = {}
     if d.get("years_0", False):
         args['year_min'] = d["years_0"]
@@ -238,11 +243,16 @@ def heatmap_display(request):
     a, b = queries.generate_heatmap_from_user_input(args)
     context["stats1"] = a
     context["stats2"] = b
+    # displays an error page when the specifications do not match any games
+    # and there is no heatmap to display
     if not a:
         return render(request, '404.html')
     return render(request, 'heatmap_display.html', context)
 
 def heatmap_comp_menu(request):
+    """
+    Displays the menu for comparison heatmaps 
+    """
     context = {}
     res = None
     if request.method == 'GET':
@@ -260,23 +270,31 @@ def heatmap_comp_menu(request):
 
 
 def heatmap_display_comp(request):
+    """
+    Displays comparison heatmaps based on user input
+    """
     context = {}
 
     d = request.POST.dict()
     d_c = request.POST.dict()
 
+    # creation of the arguments dictionary for heatmap 1
     args = {}
     if d.get("years_0", False):
         args['year_min'] = d["years_0"]
+    if d.get("years_1", False):
         args['year_max'] = d["years_1"]
     if d.get("num_move_0", False):
         args['num_move_min'] = d["num_move_0"]
+    if d.get("num_move_1", False):
         args['num_move_max'] = d["num_move_1"]
     if d.get("ratings_w_0", False):
         args['white_rating_min'] = d["ratings_w_0"]
+    if d.get("ratings_w_1", False):
         args['white_rating_max'] = d["ratings_w_1"]
     if d.get("ratings_b_0", False):
         args['black_rating_min'] = d["ratings_b_0"]
+    if d.get("ratings_b_1", False):
         args['black_rating_max'] = d["ratings_b_1"]
     if d.get("ecos", False):
         args['ECO'] = d["ecos"]
@@ -295,18 +313,24 @@ def heatmap_display_comp(request):
     if d.get("map_type", False):
         args['heatmap_type'] = d["map_type"]
 
+    # creation of the comparison arguments dictionary, or the dictionary
+    # for heatmap 2. 
     args_c = {}
     if d_c.get("years_c_0", False):
         args_c['year_min'] = d_c["years_c_0"]
+    if d_c.get("years_c_1", False):
         args_c['year_max'] = d_c["years_c_1"]
     if d_c.get("num_move_c_0", False):
         args_c['num_move_min'] = d_c["num_move_c_0"]
+    if d_c.get("num_move_c_1", False):
         args_c['num_move_max'] = d_c["num_move_c_1"]
     if d.get("ratings_w_c_0", False):
         args_c['white_rating_min'] = d_c["ratings_w_c_0"]
+    if d.get("ratings_w_c_1", False):
         args_c['white_rating_max'] = d_c["ratings_w_c_1"]
     if d.get("ratings_b_c_0", False):
         args_c['black_rating_min'] = d_c["ratings_b_c_0"]
+    if d.get("ratings_b_c_1", False):
         args_c['black_rating_max'] = d_c["ratings_b_c_1"]
     if d_c.get("ecos_c", False):
         args_c['ECO'] = d_c["ecos_c"]
@@ -325,19 +349,24 @@ def heatmap_display_comp(request):
     if d_c.get("map_type_c", False):
         args_c['heatmap_type'] = d_c["map_type_c"]
     
+    # statistics are returned by generate_comparison_from_user_input and stored
     a,b,c,d,e,f = queries.generate_comparison_from_user_input([args, args_c])
 
+    # if there were no games to generate one of the heatmaps, directs to 
+    # an error page
     if not a:
         return render(request, '405.html')
     if not b:
         return render(request, '406.html')
-
+    
+    # adds the statistics to the context
     context["stats1"] = a
     context["stats2"] = b
     context["stats3"] = c
     context["stats4"] = d
     context["stats5"] = e
     context["stats6"] = f
-
+    
+    # displays the comparison heatmaps
     return render(request, 'heatmap_display_comp.html', context)
 
