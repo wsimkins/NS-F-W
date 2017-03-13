@@ -14,6 +14,26 @@ KNIGHT_DIFFS = [(1, 2), (1, -2), (-1, 2), (-1, -2), (2, 1), (2, -1), (-2, 1), (-
 
 
 def generate_moved_to_data(move_list, color, piece):
+	'''
+	Given a list of moves, the color which made those moves, and the piece 
+	(or all) that made those moves, generates a numpy array
+	containing counts for each square on a chess board representing the number
+	of the times that square was moved to in move_list as well as the % of
+	moves which were made to the kingside
+
+	Inputs:
+		move_list: a list of chess moves
+		color: "white" or "black" depending on which color the moves in 
+			move_list were made by
+		piece: a string representing the piece that the moves in move_list
+			were made by (could be "all")
+
+	Returns:
+		an 8x8 numpy array containing counts representing the number of times
+			each square was moved to in move_list
+		a float represnting the % of moves in move_list which were made to the 
+			kingside
+	'''
 	heatmap_data = np.zeros((8,8))
 	kingside = 0
 
@@ -21,15 +41,17 @@ def generate_moved_to_data(move_list, color, piece):
 		move = move_tup[0]
 		destination_tuples = []
 
+		# uses regex to search each move for a destination such as "e5" or "a1"
 		destination = re.search("[a-h][1-8]", move)
 		if destination:
 			destination = destination.group()
 			destination_tuples = [(LETTER_TO_NUM[destination[0]], int(destination[1]))]
 
+			# increments kingside by 1 if the destination is on the kingside
 			if destination_tuples[0][0] >= 5:
 				kingside += 1
 
-
+		# handles kingside and queenside castling
 		elif move == "0-0":
 			kingside += 1
 			if piece == "rook":
@@ -74,6 +96,26 @@ def generate_moved_to_data(move_list, color, piece):
 
 
 def generate_time_spent_data(white_move_list, black_move_list):
+	'''
+	Given a the white and black moves from a single game of chess, recreates
+	the position reached after each move and then increments the position of 
+	each piece by 1, so that the total time spent on each square by each piece
+	during the game is represented in a numpy array.
+
+	Inputs:
+		white_move_list: a list of white moves
+		black_move_list: the corresponding list of black 
+			moves (from the same game)
+
+	Returns:
+		a dictionary whose keys are white pieces and whose values are 8x8 numpy
+			arrays where the count in each square represents the total number
+			of turns spent on that square by the corresponding piece
+		the corresponding dictionary for black pieces
+		the % of total white moves that were forward
+		the % of total black moves that were forward
+	'''
+	# initializes the locations of all pieces based off of the starting positions
 	STARTING_SQUARES = {"white":{"rook":[(1, 1), (8, 1)], "knight":[(2, 1), (7, 1)],
 	"bishop":[(3, 1), (6, 1)], "queen":[(4, 1)], "king":[(5, 1)], 
 	"pawn":[(1, 2), (2, 2), (3, 2), (4, 2), (5, 2), (6, 2), (7, 2), (8, 2)],
@@ -85,10 +127,11 @@ def generate_time_spent_data(white_move_list, black_move_list):
 	"all":[(1, 7), (2, 7), (3, 7), (4, 7), (5, 7), (6, 7), (7, 7), (8, 7),
 	 (1, 8), (2, 8), (3, 8), (4, 8), (5, 8), (6, 8), (7, 8), (8, 8)]}}
 
-
+	 # initializes the white and balck return dictionaries
 	white_data = {"rook":np.zeros((8,8)), "knight":np.zeros((8,8)), "bishop": np.zeros((8,8)), "queen":np.zeros((8,8)), "king":np.zeros((8,8)), "pawn":np.zeros((8,8))}
 	black_data = {"rook":np.zeros((8,8)), "knight":np.zeros((8,8)), "bishop": np.zeros((8,8)), "queen":np.zeros((8,8)), "king":np.zeros((8,8)), "pawn":np.zeros((8,8))}
 
+	# an array representing the current board state of the game
 	cur_board = np.array([["BR", "BN", "BB", "BQ", "BK", "BB", "BN", "BR"],
        ["BP", "BP", "BP", "BP", "BP", "BP", "BP", "BP"],
        ["e ", "e ", "e ", "e ", "e ", "e ", "e ", "e "],
@@ -100,6 +143,7 @@ def generate_time_spent_data(white_move_list, black_move_list):
 
 	cur_locs = STARTING_SQUARES
 
+	# increments the starting square of each piece by 1 at the beginning of the game
 	for piece in white_data.keys():
 		white_ss = STARTING_SQUARES["white"][piece]
 		black_ss = STARTING_SQUARES["black"][piece]
@@ -107,11 +151,14 @@ def generate_time_spent_data(white_move_list, black_move_list):
 			white_data[piece][8 - white_ss[i][1]][white_ss[i][0] - 1] = 1
 			black_data[piece][8 - black_ss[i][1]][black_ss[i][0] - 1] = 1
 
+	# initializes a dictionary containing two values for each piece:
+	# the total number of forward moves and the total number of moves
 	wl = len(white_move_list)
 	bl = len(black_move_list)
 	white_aggression = {"Rook":[0,0], "Knight":[0,0], "Bishop":[0,0], "Queen":[0,0], "King":[0,0], "Pawn":[0,0], "All":[0,wl]}
 	black_aggression = {"Rook":[0,0], "Knight":[0,0], "Bishop":[0,0], "Queen":[0,0], "King":[0,0], "Pawn":[0,0], "All":[0,bl]}
 
+	# increments through each pair of white moves and black moves in the game
 	for move_num in range(len(white_move_list)):
 		en_passant = False
 		white_move = white_move_list[move_num][0]
@@ -119,7 +166,7 @@ def generate_time_spent_data(white_move_list, black_move_list):
 		if move_num < len(black_move_list):
 			black_move = black_move_list[move_num][0]
 
-
+		# handles white King moves
 		if white_move[0] == "K":
 			destination = re.search("[a-h][1-8]", white_move).group()
 			destination_tuple = (LETTER_TO_NUM[destination[0]], int(destination[1]))
@@ -133,6 +180,7 @@ def generate_time_spent_data(white_move_list, black_move_list):
 				white_aggression["All"][0] += 1
 			white_aggression["King"][1] += 1
 
+		# handles white Queen moves
 		elif white_move[0] == "Q":
 			destination = re.search("[a-h][1-8]", white_move).group()
 			destination_tuple = (LETTER_TO_NUM[destination[0]], int(destination[1]))
@@ -146,7 +194,7 @@ def generate_time_spent_data(white_move_list, black_move_list):
 				white_aggression["All"][0] += 1
 			white_aggression["Queen"][1] += 1
 
-
+		# handles white Bishop moves
 		elif white_move[0] == "B":
 			destination = re.search("[a-h][1-8]", white_move).group()
 			destination_tuple = (LETTER_TO_NUM[destination[0]], int(destination[1]))
@@ -156,6 +204,8 @@ def generate_time_spent_data(white_move_list, black_move_list):
 			if len(bishop_locs) == 1:
 				prev_loc = bishop_locs[0]
 				cur_locs["white"]["bishop"] = []
+			# if there are two bishops, determines which one could have made
+			# the current move
 			else:
 				for i in range(len(bishop_locs)):
 					loc = bishop_locs[i]
@@ -177,7 +227,7 @@ def generate_time_spent_data(white_move_list, black_move_list):
 				white_aggression["All"][0] += 1
 			white_aggression["Bishop"][1] += 1
 
-
+		# handles white Knight moves
 		elif white_move[0] == "N":
 			destination = re.search("[a-h][1-8]", white_move).group()
 			destination_tuple = (LETTER_TO_NUM[destination[0]], int(destination[1]))
@@ -188,6 +238,8 @@ def generate_time_spent_data(white_move_list, black_move_list):
 			if len(knight_locs) == 1:
 				prev_loc = knight_locs[0]
 				cur_locs["white"]["knight"] = [] 
+			# if there are two Knights, determines which one could have made
+			# the current move
 			elif disambig_let:
 				letter = disambig_let.group()[0]
 				file_num = LETTER_TO_NUM[letter]
@@ -222,7 +274,7 @@ def generate_time_spent_data(white_move_list, black_move_list):
 				white_aggression["All"][0] += 1
 			white_aggression["Knight"][1] += 1
 
-
+		# handles white Rook moves
 		elif white_move[0] == "R":
 			destination = re.search("[a-h][1-8]", white_move).group()
 			destination_tuple = (LETTER_TO_NUM[destination[0]], int(destination[1]))
@@ -233,6 +285,8 @@ def generate_time_spent_data(white_move_list, black_move_list):
 			if len(rook_locs) == 1:
 				prev_loc = rook_locs[0]
 				cur_locs["white"]["rook"] = [] 
+			# if there are two Rooks, determines which one could have made the
+			# current move
 			elif disambig_let:
 				letter = disambig_let.group()[0]
 				file_num = LETTER_TO_NUM[letter]
@@ -282,12 +336,13 @@ def generate_time_spent_data(white_move_list, black_move_list):
 				white_aggression["All"][0] += 1
 			white_aggression["Rook"][1] += 1
 
-
+		# handles white pawn moves
 		elif white_move[0].islower():
 			destination = re.search("[a-h][1-8]", white_move).group()
 			destination_tuple = (LETTER_TO_NUM[destination[0]], int(destination[1]))
 			pawn_locs = cur_locs["white"]["pawn"]
 			
+			# handles pawn moves which are not captures
 			if "x" not in white_move:
 				moved = False
 				for i in range(len(pawn_locs)):
@@ -304,6 +359,8 @@ def generate_time_spent_data(white_move_list, black_move_list):
 							prev_loc = loc
 							del pawn_locs[i]
 							break
+
+			# handles pawn captures
 			else:
 				letter = white_move[0]
 				file_num = LETTER_TO_NUM[letter]
@@ -314,18 +371,20 @@ def generate_time_spent_data(white_move_list, black_move_list):
 						del pawn_locs[i]
 						break
 
+				# handles en passant
 				if cur_board[convert_tup(destination_tuple)] == "e ":
 					en_passant = True
 					captured_square = convert_tup((destination_tuple[0], destination_tuple[1] - 1))
 					cur_board[captured_square] = "e "
 					cur_locs["black"]["pawn"].remove((destination_tuple[0], destination_tuple[1] - 1))
 
-
+			# handles non promoting pawn moves
 			if destination_tuple[1] != 8:
 				cur_locs["white"]["pawn"].append(destination_tuple)
 				cur_board[convert_tup(prev_loc)] = "e "
 				cur_board[convert_tup(destination_tuple)] = "WP"
 
+			# handles promotions
 			else:
 				cur_board[convert_tup(prev_loc)] = "e "
 				if "Q" in white_move:
@@ -346,7 +405,7 @@ def generate_time_spent_data(white_move_list, black_move_list):
 			white_aggression["All"][0] += 1
 			white_aggression["Pawn"][1] += 1
 
-
+		# handles white kingside castling
 		if white_move == "0-0":
 			prev_loc = (0,0)
 			destination_tuple = (0,0)
@@ -361,7 +420,7 @@ def generate_time_spent_data(white_move_list, black_move_list):
 			white_aggression["King"][1] += 1
 			white_aggression["Rook"][1] += 1
 
-
+		# handles white queenside castling
 		if white_move == "0-0-0":
 			prev_loc = (0,0)
 			destination_tuple = (0,0)
@@ -376,8 +435,7 @@ def generate_time_spent_data(white_move_list, black_move_list):
 			white_aggression["King"][1] += 1
 			white_aggression["Rook"][1] += 1
 
-
-
+		# deletes black pieces that were captured
 		if "x" in white_move and not en_passant:
 			for piece in cur_locs["black"].keys():
 				for i in range(len(cur_locs["black"][piece])):
@@ -387,11 +445,12 @@ def generate_time_spent_data(white_move_list, black_move_list):
 						break
 
 
-		
-
 		en_passant = False
 
+		# handles black move if there is one 
+		# (may not be a black move at the end of the game)
 		if black_move:
+			# handles black King moves
 			if black_move[0] == "K":
 				destination = re.search("[a-h][1-8]", black_move).group()
 				destination_tuple = (LETTER_TO_NUM[destination[0]], int(destination[1]))
@@ -405,7 +464,7 @@ def generate_time_spent_data(white_move_list, black_move_list):
 					black_aggression["All"][0] += 1
 				black_aggression["King"][1] += 1
 
-
+			# handles black Queen moves
 			elif black_move[0] == "Q":
 				destination = re.search("[a-h][1-8]", black_move).group()
 				destination_tuple = (LETTER_TO_NUM[destination[0]], int(destination[1]))
@@ -419,7 +478,7 @@ def generate_time_spent_data(white_move_list, black_move_list):
 					black_aggression["All"][0] += 1
 				black_aggression["Queen"][1] += 1
 
-
+			# handles black bishop moves
 			elif black_move[0] == "B":
 				destination = re.search("[a-h][1-8]", black_move).group()
 				destination_tuple = (LETTER_TO_NUM[destination[0]], int(destination[1]))
@@ -428,6 +487,8 @@ def generate_time_spent_data(white_move_list, black_move_list):
 				if len(bishop_locs) == 1:
 					prev_loc = bishop_locs[0]
 					cur_locs["black"]["bishop"] = []
+				# if there are two bishops, determines which one could have
+				# made the current move
 				else:
 					for i in range(len(bishop_locs)):
 						loc = bishop_locs[i]
@@ -448,7 +509,7 @@ def generate_time_spent_data(white_move_list, black_move_list):
 					black_aggression["All"][0] += 1
 				black_aggression["Bishop"][1] += 1
 
-
+			# handles black Knight moves
 			elif black_move[0] == "N":
 				destination = re.search("[a-h][1-8]", black_move).group()
 				destination_tuple = (LETTER_TO_NUM[destination[0]], int(destination[1]))
@@ -459,6 +520,8 @@ def generate_time_spent_data(white_move_list, black_move_list):
 				if len(knight_locs) == 1:
 					prev_loc = knight_locs[0]
 					cur_locs["black"]["knight"] = [] 
+				# if there are two knights, determines which could have made
+				# the current move
 				elif disambig_let:
 					letter = disambig_let.group()[0]
 					file_num = LETTER_TO_NUM[letter]
@@ -494,7 +557,7 @@ def generate_time_spent_data(white_move_list, black_move_list):
 					black_aggression["All"][0] += 1
 				black_aggression["Knight"][1] += 1
 
-
+			# handles black rook moves
 			elif black_move[0] == "R":
 				destination = re.search("[a-h][1-8]", black_move).group()
 				destination_tuple = (LETTER_TO_NUM[destination[0]], int(destination[1]))
@@ -505,6 +568,8 @@ def generate_time_spent_data(white_move_list, black_move_list):
 				if len(rook_locs) == 1:
 					prev_loc = rook_locs[0]
 					cur_locs["black"]["rook"] = [] 
+				# if there are two rooks, determines which could have made the 
+				# current move
 				elif disambig_let:
 					letter = disambig_let.group()[0]
 					file_num = LETTER_TO_NUM[letter]
@@ -555,12 +620,13 @@ def generate_time_spent_data(white_move_list, black_move_list):
 					black_aggression["All"][0] += 1
 				black_aggression["Rook"][1] += 1
 
-
+			# handles black pawn moves
 			elif black_move[0].islower():
 				destination = re.search("[a-h][1-8]", black_move).group()
 				destination_tuple = (LETTER_TO_NUM[destination[0]], int(destination[1]))
 				pawn_locs = cur_locs["black"]["pawn"]
 				
+				# handles pawn moves which are not captures
 				if "x" not in black_move:
 					moved = False
 					for i in range(len(pawn_locs)):
@@ -578,6 +644,7 @@ def generate_time_spent_data(white_move_list, black_move_list):
 								prev_loc = loc
 								del pawn_locs[i]
 								break
+				# handles pawn captures
 				else:
 					letter = black_move[0]
 					file_num = LETTER_TO_NUM[letter]
@@ -587,17 +654,20 @@ def generate_time_spent_data(white_move_list, black_move_list):
 							prev_loc = loc
 							del pawn_locs[i]
 							break
+					# handles en passant
 					if cur_board[convert_tup(destination_tuple)] == "e ":
 						en_passant = True
 						captured_square = convert_tup((destination_tuple[0], destination_tuple[1] + 1))
 						cur_board[captured_square] = "e "
 						cur_locs["white"]["pawn"].remove((destination_tuple[0], destination_tuple[1] + 1))
 
+				# handles non promotions
 				if destination_tuple[1] != 1:
 					cur_locs["black"]["pawn"].append(destination_tuple)
 					cur_board[convert_tup(prev_loc)] = "e "
 					cur_board[convert_tup(destination_tuple)] = "BP"
 
+				# handles promotions
 				else:
 					cur_board[convert_tup(prev_loc)] = "e "
 					if "Q" in black_move:
@@ -618,7 +688,7 @@ def generate_time_spent_data(white_move_list, black_move_list):
 					black_aggression["All"][0] += 1
 				black_aggression["Pawn"][1] += 1
 
-
+			# handles black kingside castling
 			if black_move == "0-0":
 				prev_loc = (0,0)
 				destination_tuple = (0, 0)
@@ -633,7 +703,7 @@ def generate_time_spent_data(white_move_list, black_move_list):
 				black_aggression["Rook"][1] += 1
 				black_aggression["All"][1] += 1
 
-
+			# handles black queenside castling
 			if black_move == "0-0-0":
 				prev_loc = (0,0)
 				destination_tuple = (0, 0)
@@ -648,7 +718,8 @@ def generate_time_spent_data(white_move_list, black_move_list):
 				black_aggression["Rook"][1] += 1
 				black_aggression["All"][1] += 1
 
-
+			# handles non en passant captures and deletes the
+			# captured white piece
 			if "x" in black_move and not en_passant:
 				for piece in cur_locs["white"].keys():
 					for i in range(len(cur_locs["white"][piece])):
@@ -657,7 +728,7 @@ def generate_time_spent_data(white_move_list, black_move_list):
 							del cur_locs["white"][piece][i]
 							break
 
-
+		# increments the current location of all pieces still on the board
 		for piece in cur_locs["white"].keys():
 			for loc in cur_locs["white"][piece]:
 				if piece != "all":
@@ -674,6 +745,17 @@ def generate_time_spent_data(white_move_list, black_move_list):
  
 
 def generate_captures_heatmap(move_list):
+	'''
+	Given a move list, returns an array representing the number of captures
+	that occured on each square
+
+	Inputs:
+		move_list: a list of chess moves
+
+	Returns:
+		an 8x8 numpy array whose entries are counts representing the number of
+			captures that occurred on the corresponding square in move_list
+	'''
 	heatmap_data = np.zeros((8,8))
 	for move in move_list:
 		move = move[0]
@@ -685,6 +767,26 @@ def generate_captures_heatmap(move_list):
 
 
 def calculate_trade_statistics(white_move_lists, black_move_lists, num_moves_white, num_moves_black):
+	'''
+	Given a list of white move lists and a list of black move lists, calculates
+	capture statistics for each color
+
+	Inputs:
+		white_move_lists: a list of lists containing white moves
+		black_move_lists: a list of lists containing the corresponding black
+			moves (from the same games)
+		num_moves_white: the total number of moves in white_move_lists
+		num_moves_black: the total number of moves in black_move_lists
+
+	Returns:
+		a float representing the percentage of white moves which were captures,
+		a float representing the percentage of black moves which were captures,
+		a float representing the percentage of white captures which were
+			recaptures (meaning black made a capture on the same square on
+			the previous move),
+		a float representing the percentage of black captures which were
+			recaptures
+	'''
 	white_captures = 0
 	black_captures = 0
 	white_recaptures = 0
@@ -694,6 +796,8 @@ def calculate_trade_statistics(white_move_lists, black_move_lists, num_moves_whi
 		white_move_list = white_move_lists[i]
 		black_move_list = black_move_lists[i]
 
+		# goes through each move and determines if it was a capture and, if so,
+		# whether it was a recapture
 		for move_num in range(len(white_move_list)):
 			white_move = white_move_list[move_num][0]
 			if "x" in white_move:
@@ -716,6 +820,7 @@ def calculate_trade_statistics(white_move_lists, black_move_lists, num_moves_whi
 					if white_capture_loc == black_capture_loc:
 						black_recaptures += 1
 
+	# calculates capture% and recapture% for white and black
 	white_capture_percent = float(white_captures)/num_moves_white
 	black_capture_percent = float(black_captures)/num_moves_black
 	white_recapture_percent = float(white_recaptures)/white_captures
@@ -726,10 +831,19 @@ def calculate_trade_statistics(white_move_lists, black_move_lists, num_moves_whi
 
 
 def convert_tup(tup):
+	'''
+	converts coordinates as they appear in chess notation to the corresponding
+	numpy coordinates
+	'''
 	return (8 - tup[1], tup[0] - 1)
 
 
 def determine_aggression(prev_loc, destination_tuple, color):
+	'''
+	Given the starting and ending location for a move and the color which made
+	that move, returns a boolean representing whether or not the move was 
+	forward or backward
+	'''
 	if color == "white":
 		if destination_tuple[1] > prev_loc[1]:
 			return True
