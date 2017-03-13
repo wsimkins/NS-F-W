@@ -148,6 +148,7 @@ class SearchFormCompare(forms.Form):
     that when making a comparison heatmap the argument dictionaries for heatmap 1
     and heatmap 2 have distinct keys 
     """
+    years_c = YearRange(
                 label='Year(s)',
                 help_text='1858-2013',
                 widget=RANGE_WIDGET,
